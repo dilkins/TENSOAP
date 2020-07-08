@@ -9,17 +9,6 @@ This repository contains a Python code for carrying out Symmetry-Adapted Gaussia
 
 3. Andrea Grisafi, David M. Wilkins, Benjamin A. R. Meyer, Alberto Fabrizio, Clemence Corminboeuf, Michele Ceriotti, "A Transferable Machine-Learning Model of the Electron Density", ACS Cent. Sci. 5, 57 (2019)
 
-**NOTE: This implementation is intended only to serve as a proof-of-principle of the SA-GPR method. It has not yet been thorougly tested, and may be very slow.**
-
-What's New
-==========
-
-Since the previous release (v2.0), the following features have been included:
-
-* While O(3) kernels are the default, SO(3) kernels can also be built by taking the imaginary part of the power spectrum.
-* Dressed-atom model functionality for subtracting stoichiometric predictions.
-* Optional jitter term for sparse regression.
-
 Requirements
 ============
 
