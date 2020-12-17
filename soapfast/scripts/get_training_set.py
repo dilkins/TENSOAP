@@ -16,7 +16,7 @@ def get_training_set(PS,frames,scale = [],fps = False,initial = -1,ntrain = -1,m
     if fps:
         # Do FPS ordering of the power spectrum
         FPS_details      = generate_FPS(PS[0],scale=scale,nsparse=len(PS[0]),initial=initial)
-        reordered_PS     = [apply_FPS(PS[i],FPS_details) for i in xrange(len(PS))]
+        reordered_PS     = [apply_FPS(PS[i],FPS_details) for i in range(len(PS))]
         reordered_frames = [frames[i] for i in FPS_details]
     
     # Choose the training set
@@ -24,29 +24,29 @@ def get_training_set(PS,frames,scale = [],fps = False,initial = -1,ntrain = -1,m
         ntrain = len(PS[0])
     
     if   (mode == 'seq'):
-        training_set = np.array(range(ntrain))
+        training_set = np.array(list(range(ntrain)))
     elif (mode == 'rdm'):
-        training_set = range(len(PS[0]))
+        training_set = list(range(len(PS[0])))
         random.shuffle(training_set)
         training_set = np.array(training_set[:ntrain])
     elif (mode == 'input'):
         training_set = np.array([int(line.rstrip()) for line in open(infile)])
     else:
-        print "ERROR: I don't see how we got here."
+        print("ERROR: I don't see how we got here.")
         sys.exit(0)
     
     # Get the testing set
-    testing_set = np.setdiff1d(range(len(PS[0])),training_set)
+    testing_set = np.setdiff1d(list(range(len(PS[0]))),training_set)
     
     # Split the power spectrum into testing and training power spectra
-    PS_train    = [PS[i][training_set] for i in xrange(len(PS))]
-    PS_test     = [PS[i][testing_set] for i in xrange(len(PS))]
+    PS_train    = [PS[i][training_set] for i in range(len(PS))]
+    PS_test     = [PS[i][testing_set] for i in range(len(PS))]
     frame_train = [frames[i] for i in training_set]
     frame_test  = [frames[i] for i in testing_set]
     
     # Now print out all of the important information: FPS ordering (if applicable), training and testing sets, as well as training and testing power spectra
     out_array = [FPS_details,reordered_frames,training_set,testing_set,frame_train,frame_test]
-    for i in xrange(len(PS)):
+    for i in range(len(PS)):
         out_array.append(PS_train[i])
         out_array.append(PS_test[i])
     out_array = np.array(out_array,dtype=object)
@@ -72,7 +72,7 @@ def main():
     parser.add_argument("-o",   "--ofile",            default='',                                   help="Output file prefix")
     args = parser.parse_args()
     
-    PS      = [np.load(args.power[i]) for i in xrange(len(args.power))]
+    PS      = [np.load(args.power[i]) for i in range(len(args.power))]
     fps     = args.fps
     mode    = args.mode
     infile  = args.infile
@@ -80,7 +80,7 @@ def main():
     outfile = args.ofile
     ntrain  = args.ntrain
     if ((mode == 'input') and (infile == '')):
-        print "ERROR: an input file must be specified!"
+        print("ERROR: an input file must be specified!")
         sys.exit(0)
     
     if (outfile == ''):
@@ -89,7 +89,7 @@ def main():
     nrow = len(PS[0])
     
     if (args.scaling == ''):
-        scale = np.array([1 for i in xrange(nrow)])
+        scale = np.array([1 for i in range(nrow)])
     else:
         scale = np.load(args.scaling)
 

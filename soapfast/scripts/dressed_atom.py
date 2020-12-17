@@ -30,7 +30,7 @@ def dressed_atom(features,property_in,ntrain,reg=-100.0,verbose=False):
         test_data = data
         err = np.linalg.norm(pred_data - test_data) / len(pred_data)
         if (verbose):
-            print "get_error called with reg = %f; error = %f"%(reg,err)
+            print("get_error called with reg = %f; error = %f"%(reg,err))
         if (iterate):
             return err
         else:
@@ -40,14 +40,14 @@ def dressed_atom(features,property_in,ntrain,reg=-100.0,verbose=False):
         return get_error(x,test_prop,train_prop,test_feat,True)
 
     # Minimize the prediction error with respect to the regularization
-    outp = scipy.optimize.minimize(func,reg,method='Nelder-Mead')
-    print
-    print "Nelder-Mead optimization completed"
+    outp = scipy.optimize.minimize(func,reg,method='Nelder-Mead',options={'initial_simplex':np.reshape([-10.0,1.0],(2,1))})
+    print()
+    print("Nelder-Mead optimization completed")
     out_reg = outp['x'][0]
 
     weights = get_error(out_reg,test_prop,train_prop,test_feat,False)[1]
 
-    print weights
+    print(weights)
 
     # Return optimal weights and regularization
     return [weights,out_reg]
@@ -75,38 +75,38 @@ def main():
         outfile = fname
     outfile = outfile.replace(".xyz","")
 
-    print "Dressed-atom model: converting property %s in file %s"%(prop,fname)
+    print("Dressed-atom model: converting property %s in file %s"%(prop,fname))
 
     # Read in file
     file_in = read(fname,':')
     npoints = len(file_in)
 
     # Get properties, take the trace if it's a rank-2 tensor
-    tens = [file_in[i].info[prop] for i in xrange(npoints)]
+    tens = [file_in[i].info[prop] for i in range(npoints)]
     lnshp = len(np.shape(tens[0]))
     if (lnshp == 0):
-        print "Scalar property"
-        scalar = np.array([tens[i] for i in xrange(npoints)]).astype(float)
+        print("Scalar property")
+        scalar = np.array([tens[i] for i in range(npoints)]).astype(float)
     elif (lnshp == 2):
-        print "Rank-2 tensor property; taking trace"
-        scalar = np.array([ (tens[i][0,0] + tens[i][1,1] + tens[i][2,2])/3.0 for i in xrange(npoints)]).astype(float)
+        print("Rank-2 tensor property; taking trace")
+        scalar = np.array([ (tens[i][0,0] + tens[i][1,1] + tens[i][2,2])/3.0 for i in range(npoints)]).astype(float)
     else:
-        print "ERROR: only scalar or rank-2 tensor properties supported"
+        print("ERROR: only scalar or rank-2 tensor properties supported")
         sys.exit(0)
 
     # Get species
     if (len(species)==0):
-        all_species = list(set(np.concatenate(np.array([file_in[i].get_chemical_symbols() for i in xrange(npoints)]))))
+        all_species = list(set(np.concatenate(np.array([file_in[i].get_chemical_symbols() for i in range(npoints)]))))
     else:
         all_species = species
     nspec = len(all_species)
 
-    print "List of species:"
-    print all_species
+    print("List of species:")
+    print(all_species)
 
     # Get features
     ftrs = np.zeros((npoints,nspec),dtype=int)
-    for i in xrange(npoints):
+    for i in range(npoints):
         ftrs[i] = np.array([file_in[i].get_chemical_symbols().count(spec) for spec in all_species])
 
     if (ntrain == -1):
@@ -120,19 +120,23 @@ def main():
     # Print output files
     np.save(outfile + "_dressed_atom.npy",np.array(model).astype(object))
     wt = model[0]
-    for i in xrange(npoints):
+    avg = 0.0
+    for i in range(npoints):
         dressed = np.dot(ftrs[i],wt)
         if (lnshp == 0):
             file_in[i].info[prop + '_DA'] = file_in[i].info[prop] - dressed
+            avg += file_in[i].info[prop] - dressed
         elif (lnshp == 2):
             tensor = copy.deepcopy(file_in[i].info[prop])
-            for j in xrange(3):
+            for j in range(3):
                 tensor[j,j] -= dressed
             file_in[i].info[prop + '_DA'] = tensor
         else:
-            print "ERROR: we should not be here!"
+            print("ERROR: we should not be here!")
             sys.exit(0)
     write(outfile + "_dressed_atom.xyz",file_in)
+    avg /= npoints
+    print("Average is " + str(avg))
 
 if __name__=="__main__":
 

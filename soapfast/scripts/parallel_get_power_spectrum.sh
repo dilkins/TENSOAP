@@ -72,3 +72,8 @@ rm PS_output_*.npy
 if [ $ncut -ne -1 ];then
  feature_fps.py -p ${outfile} -n ${ncut} -i ${initial}
 fi
+
+# Rename the sparsified power spectrum
+if [ -f ${outfile}_sparse.npy ];then
+	mv ${outfile}_sparse.npy ${outfile}.npy
+fi

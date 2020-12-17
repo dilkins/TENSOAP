@@ -5,7 +5,6 @@ import sys,os
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 import numpy as np
 from ase.io import read,write
-#from utils import regression_utils
 
 def apply_FPS(PS,fps,ofile = ''):
 
@@ -30,7 +29,7 @@ def apply_FPS(PS,fps,ofile = ''):
         PS_new = np.zeros((len(fps),len(PS[0]),ll,len(PS[0,0,0])),dtype=float)
         
     # Get sparse power spectrum.
-    for i in xrange(len(fps)):
+    for i in range(len(fps)):
         PS_new[i] = PS[fps[i]]
     
     # Save power spectrum.

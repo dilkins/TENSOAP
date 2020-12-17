@@ -17,10 +17,10 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
 
     # If we have too few of any input arguments supplied, fill the rest of the array based on what we already have
     if (len(n_env) < len(PS)):
-        for i in xrange(len(n_env),len(PS)):
+        for i in range(len(n_env),len(PS)):
             n_env.append(n_env[-1])
     if (len(initial) < len(PS)):
-        for i in xrange(len(initial),len(PS)):
+        for i in range(len(initial),len(PS)):
             initial.append(initial[-1])
 
     # If we have an L=0 property, spherical should be set to true
@@ -36,24 +36,24 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
     training_indices = train_test_set[2]
     testing_indices  = train_test_set[3]
     full_training    = []
-    for i in xrange(len(PS)):
+    for i in range(len(PS)):
         full_training.append(train_test_set[6 + 2*i])
     full_testing     = []
-    for i in xrange(len(PS)):
+    for i in range(len(PS)):
         full_testing.append(train_test_set[7 + 2*i])
 
     # Next, get an atomic power spectrum
     lam = np.zeros(len(PS),dtype=int)
-    for i in xrange(len(PS)):
+    for i in range(len(PS)):
         if (len(np.shape(PS[i])) == 3):
             lam[i] = 0
         else:
             lam[i] = (len(PS[i][0,0]) - 1)/2
     if (lam[0] != 0):
-        print "ERROR: the first power spectrum should have lambda=0 for the purposes of determining FPS ordering and building nonlinear kernels!"
+        print("ERROR: the first power spectrum should have lambda=0 for the purposes of determining FPS ordering and building nonlinear kernels!")
         sys.exit(0)
     frame_train = train_test_set[4]
-    power_atomic = [get_atomic_power_spectrum(full_training[i],frame_train,lam=lam[i]) for i in xrange(len(PS))]
+    power_atomic = [get_atomic_power_spectrum(full_training[i],frame_train,lam=lam[i]) for i in range(len(PS))]
 
     # Retain the specified number of environments
     reordered_train = []
@@ -61,7 +61,7 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
         FPS_details = generate_FPS(power_atomic[-1],nsparse=n_env[-1],initial=initial[-1])
     else:
         FPS_details = generate_FPS(power_atomic[0],nsparse=n_env[0],initial=initial[0])
-    for i in xrange(len(PS)):
+    for i in range(len(PS)):
         # Sparsify this atomic power spectrum
         reordered   = apply_FPS(power_atomic[i],FPS_details)
         reordered_train.append(reordered)
@@ -72,8 +72,8 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
     K_TT = []
     scale_train = np.array([scale[i] for i in training_indices])
     scale_test  = np.array([scale[i] for i in testing_indices])
-    for i in xrange(len(PS)):
-        scale_atomic = np.array([1 for j in xrange(len(reordered_train[i]))])
+    for i in range(len(PS)):
+        scale_atomic = np.array([1 for j in range(len(reordered_train[i]))])
         if (lam[i] == 0):
             K_MM.append(get_kernel([reordered_train[i],reordered_train[i]],zeta=zeta))
             K_NM.append(get_kernel([full_training[i],reordered_train[i]],scale=[scale_train,scale_atomic],zeta=zeta))
@@ -85,22 +85,22 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
 
     # Get the property training set and split it into tensor components
     rank = lam[-1]
-    meantrain = [0 for i in xrange(len(lam))]
+    meantrain = [0 for i in range(len(lam))]
     if (not spherical):
         if peratom:
             if rank == 0:
-                tens = [str(frame_train[i].info[prop]/scale_train[i]) for i in xrange(len(frame_train))]
+                tens = [str(frame_train[i].info[prop]/scale_train[i]) for i in range(len(frame_train))]
             elif rank == 2:
-                tens = [' '.join((np.concatenate(frame_train[i].info[prop])/scale_train[i]).astype(str)) for i in xrange(len(frame_train))]
+                tens = [' '.join((np.concatenate(frame_train[i].info[prop])/scale_train[i]).astype(str)) for i in range(len(frame_train))]
             else:
-                tens = [' '.join((np.array(frame_train[i].info[prop])/scale_train[i]).astype(str)) for i in xrange(len(frame_train))]
+                tens = [' '.join((np.array(frame_train[i].info[prop])/scale_train[i]).astype(str)) for i in range(len(frame_train))]
         else:
             if rank == 0:
-                tens = [str(frame_train[i].info[prop]) for i in xrange(len(frame_train))]
+                tens = [str(frame_train[i].info[prop]) for i in range(len(frame_train))]
             elif rank == 2:
-                tens = [' '.join(np.concatenate(frame_train[i].info[prop]).astype(str)) for i in xrange(len(frame_train))]
+                tens = [' '.join(np.concatenate(frame_train[i].info[prop]).astype(str)) for i in range(len(frame_train))]
             else:
-                tens = [' '.join(np.array(frame_train[i].info[prop]).astype(str)) for i in xrange(len(frame_train))]
+                tens = [' '.join(np.array(frame_train[i].info[prop]).astype(str)) for i in range(len(frame_train))]
         if (len(lam) > 1):
             [spherical_tensor,degen,CR,CS,keep_cols,keep_list,lin_dep_list,sym_list] = utils.sagpr_utils.get_spherical_tensor_components(tens,rank,threshold)
         else:
@@ -110,14 +110,14 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
     else:
         if peratom:
             if rank == 0:
-                tens = [str(frame_train[i].info[prop]/scale_train[i]) for i in xrange(len(frame_train))]
+                tens = [str(frame_train[i].info[prop]/scale_train[i]) for i in range(len(frame_train))]
             else:
-                tens = [' '.join((np.array(frame_train[i].info[prop].reshape(2*rank + 1))/scale_train[i]).astype(str)) for i in xrange(len(frame_train))]
+                tens = [' '.join((np.array(frame_train[i].info[prop].reshape(2*rank + 1))/scale_train[i]).astype(str)) for i in range(len(frame_train))]
         else:
             if rank == 0:
-                tens = [str(frame_train[i].info[prop]) for i in xrange(len(frame_train))]
+                tens = [str(frame_train[i].info[prop]) for i in range(len(frame_train))]
             else:
-                tens = [' '.join((np.array(frame_train[i].info[prop].reshape(2*rank + 1))).astype(str)) for i in xrange(len(frame_train))]
+                tens = [' '.join((np.array(frame_train[i].info[prop].reshape(2*rank + 1))).astype(str)) for i in range(len(frame_train))]
         # Put tensor into float form
         if (len(lam) > 1):
             spherical_tensor = np.array([i.split() for i in tens]).astype(float)
@@ -126,15 +126,15 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
             spherical_tensor = [np.array(tens,dtype=float)]
 
     if (len(spherical_tensor) != len(klist)):
-        print "ERROR: number of kernels in the kernel list (%i) must match the number of spherical tensor components (%i)!"%(len(klist),len(spherical_tensor))
+        print("ERROR: number of kernels in the kernel list (%i) must match the number of spherical tensor components (%i)!"%(len(klist),len(spherical_tensor)))
 
     # Do the regression
     if (len(reg) < len(klist)):
-        for i in xrange(len(initial),len(klist)):
+        for i in range(len(initial),len(klist)):
             reg.append(reg[-1])
     weights = []
-    for i in xrange(len(klist)):
-        print "Doing regression for L=%i"%lam[klist[i]]
+    for i in range(len(klist)):
+        print("Doing regression for L=%i"%lam[klist[i]])
         if (lam[klist[i]] == 0):
             # Get Kmn Knm
             K_MN_K_NM = np.dot(K_NM[klist[i]].T,K_NM[klist[i]])
@@ -168,7 +168,7 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
 
     # Do the prediction
     outvec = []
-    for i in xrange(len(klist)):
+    for i in range(len(klist)):
         if (not spherical):
             str_rank = ''.join(map(str,keep_list[i][1:]))
             if (str_rank == ''):
@@ -177,7 +177,7 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
             str_rank = str(lam[klist[i]])
         ov = utils.sagpr_utils.do_prediction_spherical(K_TT[klist[i]],rank_str=str_rank,weightfile='',outfile='',weight_array=weights[i])
         outvec.append(ov)
-    ns = len(outvec[0]) / (2*lam[klist[0]]+1)
+    ns = int(len(outvec[0]) / (2*lam[klist[0]]+1))
     if (not spherical):
         if (len(lam)>1):
             predcart = utils.regression_utils.convert_spherical_to_cartesian(outvec,degen,ns,CR,CS,keep_cols,keep_list,lin_dep_list,sym_list)
@@ -189,40 +189,40 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
     if (not spherical):
         if peratom:
             if rank == 0:
-                testtens = [str(frame_test[i].info[prop]/scale_test[i]) for i in xrange(len(frame_test))]
+                testtens = [str(frame_test[i].info[prop]/scale_test[i]) for i in range(len(frame_test))]
             elif rank == 2:
-                testtens = [' '.join((np.concatenate(frame_test[i].info[prop])/scale_test[i]).astype(str)) for i in xrange(len(frame_test))]
+                testtens = [' '.join((np.concatenate(frame_test[i].info[prop])/scale_test[i]).astype(str)) for i in range(len(frame_test))]
             else:
-                testtens = [' '.join((np.array(frame_test[i].info[prop])/scale_test[i]).astype(str)) for i in xrange(len(frame_test))]
+                testtens = [' '.join((np.array(frame_test[i].info[prop])/scale_test[i]).astype(str)) for i in range(len(frame_test))]
         else:
             if rank == 0:
-                testtens = [str(frame_test[i].info[prop]) for i in xrange(len(frame_test))]
+                testtens = [str(frame_test[i].info[prop]) for i in range(len(frame_test))]
             elif rank == 2:
-                testtens = [' '.join(np.concatenate(frame_test[i].info[prop]).astype(str)) for i in xrange(len(frame_test))]
+                testtens = [' '.join(np.concatenate(frame_test[i].info[prop]).astype(str)) for i in range(len(frame_test))]
             else:
-                testtens = [' '.join(np.array(frame_test[i].info[prop]).astype(str)) for i in xrange(len(frame_test))]
+                testtens = [' '.join(np.array(frame_test[i].info[prop]).astype(str)) for i in range(len(frame_test))]
         # Get spherical components
         if (len(lam) > 1):
             [test_spherical_tensor,degen,CR,CS,keep_cols,keep_list,lin_dep_list,sym_list] = utils.sagpr_utils.get_spherical_tensor_components(testtens,rank,threshold)
-            for i in xrange(len(klist)):
+            for i in range(len(klist)):
                 if (lam[klist[i]] == 0):
-                    for j in xrange(len(test_spherical_tensor[i])):
+                    for j in range(len(test_spherical_tensor[i])):
                         test_spherical_tensor[i][j] = test_spherical_tensor[i][j][0]
         else:
             test_spherical_tensor = [np.array(testtens,dtype=float)]
-        testcart = np.concatenate([np.array(testtens[i].split()).astype(float) for i in xrange(len(testtens))])
+        testcart = np.concatenate([np.array(testtens[i].split()).astype(float) for i in range(len(testtens))])
     # We are doing a spherical prediction
     else:
         if peratom:
             if rank == 0:
-                testtens = [str(frame_test[i].info[prop]/scale_test[i]) for i in xrange(len(frame_test))]
+                testtens = [str(frame_test[i].info[prop]/scale_test[i]) for i in range(len(frame_test))]
             else:
-                testtens = [' '.join((np.array(frame_test[i].info[prop].reshape(2*rank + 1))/scale_test[i]).astype(str)) for i in xrange(len(frame_test))]
+                testtens = [' '.join((np.array(frame_test[i].info[prop].reshape(2*rank + 1))/scale_test[i]).astype(str)) for i in range(len(frame_test))]
         else:
             if rank == 0:
-                testtens = [str(frame_test[i].info[prop]) for i in xrange(len(frame_test))]
+                testtens = [str(frame_test[i].info[prop]) for i in range(len(frame_test))]
             else:
-                testtens = [' '.join((np.array(frame_test[i].info[prop].reshape(2*rank + 1))).astype(str)) for i in xrange(len(frame_test))]
+                testtens = [' '.join((np.array(frame_test[i].info[prop].reshape(2*rank + 1))).astype(str)) for i in range(len(frame_test))]
         # Put tensor into float form
         if (len(lam) > 1):
             test_spherical_tensor = np.array([i.split() for i in testtens]).astype(float)
@@ -230,37 +230,37 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
         else:
             test_spherical_tensor = [np.array(testtens,dtype=float)]
     
-    print
-    print "Prediction Errors:"
-    print "=================="
-    print "Testing data points:  %i"%len(testing_indices)
-    print "Training data points: %i"%len(training_indices)
-    for i in xrange(len(klist)):
+    print()
+    print("Prediction Errors:")
+    print("==================")
+    print("Testing data points:  %i"%len(testing_indices))
+    print("Training data points: %i"%len(training_indices))
+    for i in range(len(klist)):
         intrins_dev = np.std(test_spherical_tensor[i])**2
         abs_error = np.sum((outvec[i] - test_spherical_tensor[i])**2) / ns
-        print
-        print "Errors for L=%i"%lam[klist[i]]
-        print "--------------"
-        print "ST DEV   = %.4f"%np.sqrt(intrins_dev)
-        print "ABS RMSE = %.4f"%np.sqrt(abs_error)
-        print "RMSE     = %.4f %%"%(100. * np.sqrt(np.abs(abs_error / intrins_dev)))
+        print()
+        print("Errors for L=%i"%lam[klist[i]])
+        print("--------------")
+        print("ST DEV   = %.4f"%np.sqrt(intrins_dev))
+        print("ABS RMSE = %.4f"%np.sqrt(abs_error))
+        print("RMSE     = %.4f %%"%(100. * np.sqrt(np.abs(abs_error / intrins_dev))))
     if (not spherical):
         intrins_dev = np.std(testcart)**2
         abs_error = np.sum((predcart - testcart)**2) / ns
-        print
-        print "Cartesian errors"
-        print "----------------"
-        print "ST DEV   = %.4f"%np.sqrt(intrins_dev)
-        print "ABS RMSE = %.4f"%np.sqrt(abs_error)
-        print "RMSE     = %.4f %%"%(100. * np.sqrt(np.abs(abs_error / intrins_dev)))
+        print()
+        print("Cartesian errors")
+        print("----------------")
+        print("ST DEV   = %.4f"%np.sqrt(intrins_dev))
+        print("ABS RMSE = %.4f"%np.sqrt(abs_error))
+        print("RMSE     = %.4f %%"%(100. * np.sqrt(np.abs(abs_error / intrins_dev))))
 
     # If desired, also print out weights and kernels
     if outfile != '':
         # Print out the FPS details, environmental power spectra and all kernels
         np.save(outfile + "_fps_details.npy",FPS_details)
-        for i in xrange(len(reordered_train)):
+        for i in range(len(reordered_train)):
             np.save(outfile + "_power_spectrum_" + str(i) + ".npy",reordered_train[i])
-        for i in xrange(len(klist)):
+        for i in range(len(klist)):
             np.save(outfile + "_kernel_MM_" + str(klist[i]) + ".npy",K_MM[klist[i]])
             np.save(outfile + "_kernel_NM_" + str(klist[i]) + ".npy",K_NM[klist[i]])
             np.save(outfile + "_kernel_TT_" + str(klist[i]) + ".npy",K_TT[klist[i]])
@@ -268,17 +268,17 @@ def do_sparse_learn_predict(PS,frames,reg,klist,prop,scale = [],n_env = [1000],i
     # Whether or not we print out all information, we definitely want the weights and the predictions for the testing set
     if outfile != '':
         outfile = '_' + outfile
-    for i in xrange(len(klist)):
+    for i in range(len(klist)):
         np.save('weights' + outfile + '_' + str(lam[i]) + '.npy',np.array(weights[i],dtype=object))
         if (not spherical):
             predfile = open('prediction' + outfile + '_L' + ''.join(map(str,keep_list[i][1:])) + '.txt','w')
         else:
             predfile = open('prediction' + outfile + '_L' + str(lam[klist[i]]) + '.txt','w')
-        for j in xrange(len(test_spherical_tensor[i]) / (2*lam[klist[i]] + 1)):
+        for j in range(int(len(test_spherical_tensor[i]) / (2*lam[klist[i]] + 1))):
             if peratom:
-                print >> predfile, ' '.join(str(e) for e in list(np.split(np.array(test_spherical_tensor[i]),ns)[j]*scale_test[j])),' ',' '.join(str(e) for e in list(np.split(np.array(outvec[i]),ns)[j]*scale_test[j])),' ',scale_test[j]
+                print(' '.join(str(e) for e in list(np.split(np.array(test_spherical_tensor[i]),ns)[j]*scale_test[j])),' ',' '.join(str(e) for e in list(np.split(np.array(outvec[i]),ns)[j]*scale_test[j])),' ',scale_test[j], file=predfile)
             else:
-                print >> predfile, ' '.join(str(e) for e in list(np.split(np.array(test_spherical_tensor[i]),ns)[j])),' ',' '.join(str(e) for e in list(np.split(np.array(outvec[i]),ns)[j]))
+                print(' '.join(str(e) for e in list(np.split(np.array(test_spherical_tensor[i]),ns)[j])),' ',' '.join(str(e) for e in list(np.split(np.array(outvec[i]),ns)[j])), file=predfile)
 
 ###########################################################################################################
 
@@ -304,7 +304,7 @@ def main():
     parser.add_argument("-sp",    "--spherical",                  action='store_true',                          help="Learn a spherical property")
     args = parser.parse_args()
 
-    PS = [np.load(args.power[i]) for i in xrange(len(args.power))]
+    PS = [np.load(args.power[i]) for i in range(len(args.power))]
     setmode   = args.setmode
     infile    = args.infile
     initial   = args.initial
@@ -320,21 +320,21 @@ def main():
     threshold = args.threshold
     spherical = args.spherical
     if ((setmode == 'input') and (infile == '')):
-        print "ERROR: an input file must be specified!"
+        print("ERROR: an input file must be specified!")
         sys.exit(0)
 
     if (len(env) < len(PS)):
-        for i in xrange(len(env),len(PS)):
+        for i in range(len(env),len(PS)):
             env.append(env[-1])
     if (len(initial) < len(PS)):
-        for i in xrange(len(initial),len(PS)):
+        for i in range(len(initial),len(PS)):
             initial.append(initial[-1])
     if (len(reg) < len(klist)):
-        for i in xrange(len(initial),len(klist)):
+        for i in range(len(initial),len(klist)):
             reg.append(reg[-1])
 
     if (args.scaling == ''):
-        scale = np.array([1 for i in xrange(nrow)])
+        scale = np.array([1 for i in range(nrow)])
     else:
         scale = np.load(args.scaling)
 

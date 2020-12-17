@@ -2,8 +2,14 @@
 import argparse
 import sys
 import numpy as np
+import ase
+from packaging import version
 from ase.io import read
 from ase.data import atomic_numbers,chemical_symbols
+
+# ASE 3.20 stopped interpreting vectors with 9 values as 3x3 tensors,
+# so we need to be able to distinguish them
+ASE_LOWER_3_20 = version.parse(ase.__version__) < version.parse("3.20")
 
 ###############################################################################################################################
 
@@ -33,7 +39,7 @@ def add_command_line_arguments_learn(parsetext):
 
 def set_variable_values_learn(args):
 
-    ftr = args.ftrain 
+    ftr = args.ftrain
     if (int(args.rank) == 0):
         args.spherical = True
     # Get regularization
@@ -45,15 +51,14 @@ def set_variable_values_learn(args):
     else:
         rank = int(args.rank)
         int_rank = rank
- 
+
     # Read in features
     ftrs = read(args.features,':')
 
     # Either we have supplied kernels for carrying out the regression, or sparsification kernels, but not both (or neither).
     kernels = args.kernel
     sparsify = args.sparsify
-    nat = []
-    [nat.append(ftrs[i].get_number_of_atoms()) for i in xrange(len(ftrs))]
+    nat = [ftrs[i].get_global_number_of_atoms() for i in range(len(ftrs))]
 
     # Read in tensor data for training the model
     if (not args.spherical):
@@ -62,28 +67,28 @@ def set_variable_values_learn(args):
                 tens = [ str(frame_prop) for fr in ftrs for frame_prop in fr.arrays[args.property][np.where(fr.numbers==atomic_numbers[args.center])[0]] ]
             else:
                 tens = [' '.join(frame_prop.astype(str))  for fr in ftrs for frame_prop in fr.arrays[args.property][np.where(fr.numbers==atomic_numbers[args.center])[0]]]
-            nat = [1 for i in xrange(len(tens))]
+            nat = [1 for i in range(len(tens))]
         elif args.peratom:
             if int_rank == 0:
-                tens = [str(ftrs[i].info[args.property]/nat[i]) for i in xrange(len(ftrs))]
-            elif int_rank == 2:
-                tens = [' '.join((np.concatenate(ftrs[i].info[args.property])/nat[i]).astype(str)) for i in xrange(len(ftrs))]
+                tens = [str(ftrs[i].info[args.property]/nat[i]) for i in range(len(ftrs))]
+            elif ASE_LOWER_3_20 and int_rank == 2:
+                tens = [' '.join((np.concatenate(ftrs[i].info[args.property])/nat[i]).astype(str)) for i in range(len(ftrs))]
             else:
-                tens = [' '.join((np.array(ftrs[i].info[args.property])/nat[i]).astype(str)) for i in xrange(len(ftrs))]
+                tens = [' '.join((np.array(ftrs[i].info[args.property])/nat[i]).astype(str)) for i in range(len(ftrs))]
         else:
             if int_rank == 0:
-                tens = [str(ftrs[i].info[args.property]) for i in xrange(len(ftrs))]
-            elif int_rank == 2:
-                tens = [' '.join(np.concatenate(ftrs[i].info[args.property]).astype(str)) for i in xrange(len(ftrs))]
+                tens = [str(ftrs[i].info[args.property]) for i in range(len(ftrs))]
+            elif ASE_LOWER_3_20 and int_rank == 2:
+                tens = [' '.join(np.concatenate(ftrs[i].info[args.property]).astype(str)) for i in range(len(ftrs))]
             else:
-                tens = [' '.join(np.array(ftrs[i].info[args.property]).astype(str)) for i in xrange(len(ftrs))]
+                tens = [' '.join(np.array(ftrs[i].info[args.property]).astype(str)) for i in range(len(ftrs))]
 
 
         if (kernels == None and sparsify == None):
-            print "Either regular kernels or sparsification kernels must be specified!"
+            print("Either regular kernels or sparsification kernels must be specified!")
             sys.exit(0)
         if (kernels != None and sparsify != None):
-            print "Either regular kernels or sparsification kernels must be specified (not both)!"
+            print("Either regular kernels or sparsification kernels must be specified (not both)!")
             sys.exit(0)
     else:
         if args.center != '':
@@ -91,26 +96,26 @@ def set_variable_values_learn(args):
                 tens = [ str(frame_prop) for fr in ftrs for frame_prop in fr.arrays[args.property][np.where(fr.numbers==atomic_numbers[args.center])[0]] ]
             else:
                 tens = [' '.join(frame_prop.astype(str).reshape(2*int_rank + 1))  for fr in ftrs for frame_prop in fr.arrays[args.property][np.where(fr.numbers==atomic_numbers[args.center])[0]]]
-            nat = [1 for i in xrange(len(tens))]
+            nat = [1 for i in range(len(tens))]
         elif args.peratom:
             if int_rank == 0:
-                tens = [str(ftrs[i].info[args.property]/nat[i]) for i in xrange(len(ftrs))]
+                tens = [str(ftrs[i].info[args.property]/nat[i]) for i in range(len(ftrs))]
             else:
-                tens = [' '.join((np.array(ftrs[i].info[args.property].reshape(2*int_rank + 1))/nat[i]).astype(str)) for i in xrange(len(ftrs))]
+                tens = [' '.join((np.array(ftrs[i].info[args.property].reshape(2*int_rank + 1))/nat[i]).astype(str)) for i in range(len(ftrs))]
         else:
             if int_rank == 0:
-                tens = [str(ftrs[i].info[args.property]) for i in xrange(len(ftrs))]
+                tens = [str(ftrs[i].info[args.property]) for i in range(len(ftrs))]
             else:
-                tens = [' '.join((np.array(ftrs[i].info[args.property].reshape(2*int_rank + 1))).astype(str)) for i in xrange(len(ftrs))]
+                tens = [' '.join((np.array(ftrs[i].info[args.property].reshape(2*int_rank + 1))).astype(str)) for i in range(len(ftrs))]
 
 
         if kernels != None:
             kernels = kernels[0]
         if (kernels == None and sparsify == None):
-            print "Either regular kernels or sparsification kernels must be specified!"
+            print("Either regular kernels or sparsification kernels must be specified!")
             sys.exit(0)
         if (kernels != None and sparsify != None):
-            print "Either regular kernels or sparsification kernels must be specified (not both)!"
+            print("Either regular kernels or sparsification kernels must be specified (not both)!")
             sys.exit(0)
 
     # If a selection is given for the training set, read it in
@@ -121,7 +126,7 @@ def set_variable_values_learn(args):
         # Read in an input file giving a training set
         sel = sel
     elif (len(sel) > 2):
-        print "ERROR: too many arguments given to selection!"
+        print("ERROR: too many arguments given to selection!")
         sys.exit(0)
 
     rdm = args.random
@@ -131,20 +136,20 @@ def set_variable_values_learn(args):
 
     jitter = args.jitter
     if ((jitter != None) and (sparsify == None)):
-        print "NOTE: jitter term is not used without sparse kernels"
+        print("NOTE: jitter term is not used without sparse kernels")
     if (jitter == None and isinstance(reg,list)):
         jitter = [None for i in reg]
     else:
         if (isinstance(reg,list)):
             if (len(jitter)<len(reg)):
-                print "ERROR: as many jitter terms as regularizations must be included!"
+                print("ERROR: as many jitter terms as regularizations must be included!")
                 sys.exit(0)
 
     if (args.spherical):
         jitter = [jitter]
 
     if ((sparsify != None) and (jitter == None) and (args.mode=='solve')):
-        print "NOTE: with environmental sparsification, a jitter term is recommended if the solve mode is used"
+        print("NOTE: with environmental sparsification, a jitter term is recommended if the solve mode is used")
 
     return [reg,ftr,tens,kernels,sel,rdm,rank,nat,args.peratom,args.prediction,args.weights,sparsify,args.mode,args.threshold,jitter]
 ###############################################################################################################################
@@ -171,6 +176,8 @@ def add_command_line_arguments_PS(parsetext):
     parser.add_argument("-ul", "--uselist",                   action='store_true',                      help="Use list of allowed features in PS calculation (may be quicker)")
     parser.add_argument("-sl", "--slice",         type=int,   default=-1,    nargs='+',                 help="Choose a slice of the input frames to calculate the power spectrum")
     parser.add_argument("-im", "--imag",                      action='store_true',                      help="Get imaginary power spectrum for building SO(3) kernel")
+    parser.add_argument("-nn", "--nonorm",                    action='store_true',                      help="Do not normalize power spectrum")
+
     args = parser.parse_args()
     return args
 
@@ -182,7 +189,7 @@ def set_variable_values_PS(args):
     lmax = args.lmax              # number of angular functions
     rc = args.rcut                # environment cutoff
     sg = args.sigma               # Gaussian width
-    if args.centres != '': 
+    if args.centres != '':
         cen = args.centres
     else:
         cen = []
@@ -215,7 +222,7 @@ def set_variable_values_PS(args):
     radialscale = args.radialscaling
     if radialscale != None:
         if (len(radialscale) != 3):
-            print "ERROR: three arguments (c,r0,m) must be given for radial scaling!"
+            print("ERROR: three arguments (c,r0,m) must be given for radial scaling!")
             sys.exit(0)
         radial_c  = radialscale[0]
         radial_r0 = radialscale[1]
@@ -234,27 +241,27 @@ def set_variable_values_PS(args):
     subset = ['NO',None]
     if (nsubset > -1):
         if sparsefile != '':
-            print "ERROR: subset option is not compatible with supplying a sparsification filename!"
+            print("ERROR: subset option is not compatible with supplying a sparsification filename!")
             sys.exit(0)
         if ncut == -1:
-            print "ERROR: ncut must be specified for use with subset option!"
+            print("ERROR: ncut must be specified for use with subset option!")
             sys.exit(0)
         if (submode == 'seq'):
-            print "Taking the first %i of the coordinates."%nsubset
+            print("Taking the first %i of the coordinates."%nsubset)
             subset = ['SEQ',nsubset]
         elif (submode == 'random'):
-            print "Shuffling coordinates and taking %i of them."%nsubset
+            print("Shuffling coordinates and taking %i of them."%nsubset)
             subset = ['RANDOM',nsubset]
 
     if (args.slice==-1):
         xyz_slice = []
     else:
         if (len(args.slice)!=2):
-            print "ERROR: incorrect number of elements provided to slice!"
+            print("ERROR: incorrect number of elements provided to slice!")
             sys.exit(0)
         xyz_slice = [args.slice[0],args.slice[1]]
 
-    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag]
+    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag,args.nonorm]
 
 #########################################################################
 
@@ -273,7 +280,7 @@ def set_variable_values_kernel(args):
 
     # SOAP PARAMETERS
     zeta = args.zeta                   # Kernel exponentiation
-    
+
     power = args.power
     if (len(power)>1):
         PS = [np.load(power[0]),np.load(power[1])]
@@ -293,18 +300,18 @@ def set_variable_values_kernel(args):
         degen = len(PS[0][0,0])
         lam = (degen-1) / 2
         if ((zeta > 1) and (args.power0 == None)):
-            print "ERROR: lambda=0 power spectrum must be specified for zeta > 1!"
+            print("ERROR: lambda=0 power spectrum must be specified for zeta > 1!")
             sys.exit(0)
-        for i in xrange(2):
+        for i in range(2):
             if (len(PS[i][0,0]) != 2*lam+1):
-                print "ERROR: power spectrum number " + str(i+1) + " has the wrong lambda value!"
+                print("ERROR: power spectrum number " + str(i+1) + " has the wrong lambda value!")
                 sys.exit(0)
         featsize = [len(PS[0][0,0,0]),len(PS[1][0,0,0])]
-    
+
     if (featsize[0] != featsize[1]):
-        print "The two feature sizes are different!"
+        print("The two feature sizes are different!")
         sys.exit(0)
-    
+
     # Read in L=0 power spectra
     PS0 = [None,None]
     if (args.power0 != ''):
@@ -312,11 +319,11 @@ def set_variable_values_kernel(args):
             PS0 = [np.load(args.power0[0]),np.load(args.power0[1])]
         else:
             PS0 = [np.load(args.power0[0]),np.load(args.power0[0])]
-        for i in xrange(2):
+        for i in range(2):
             if (len(PS0[i]) != npoints[i]):
-                print "ERROR: lambda=0 power spectrum number " + str(i+1) + " should have the same number of points as lambda=" + str(lam) + "!"
+                print("ERROR: lambda=0 power spectrum number " + str(i+1) + " should have the same number of points as lambda=" + str(lam) + "!")
                 sys.exit(0)
-    
+
     # Read in scaling data if appropriate
     scaling = args.scaling
     if scaling == None:
@@ -324,9 +331,9 @@ def set_variable_values_kernel(args):
     elif len(scaling)==1:
         scaling.append(scaling[0])
     scale = []
-    for i in xrange(len(scaling)):
+    for i in range(len(scaling)):
         if scaling[i] == 'NONE':
-            scale.append(np.array([1 for j in xrange(npoints[i])]))
+            scale.append(np.array([1 for j in range(npoints[i])]))
         else:
             scale.append(np.load(scaling[i]))
 

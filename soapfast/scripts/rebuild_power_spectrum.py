@@ -25,7 +25,7 @@ blocksize = int(math.ceil(float(ndata)/float(nblocks)))
 
 # Put power spectra of individual blocks together into a single power spectrum
 pslices = []
-for i in xrange(nblocks):
+for i in range(nblocks):
     pslices.append(np.load(fname + "_" + str(i) + ".npy"))
 
 power = np.vstack(pslices)

@@ -20,12 +20,12 @@ nconfigs = len(all_coords)
 blocksize = int(math.ceil(float(nconfigs)/float(nblock)))
 nblock = int(math.ceil(float(nconfigs)/float(blocksize)))
 
-print "Read in file with %i frames."%(nconfigs)
-print "Creating %i blocks."%(nblock)
-print "Each block will contain (up to) %i frames."%(blocksize)
+print("Read in file with %i frames."%(nconfigs))
+print("Creating %i blocks."%(nblock))
+print("Each block will contain (up to) %i frames."%(blocksize))
 
 # Split into blocks
-for i in xrange(nblock):
+for i in range(nblock):
     fname = args.ofile + "_" + str(i) + ".xyz"
     imin = i*blocksize
     imax = min(i*blocksize + blocksize,nconfigs)

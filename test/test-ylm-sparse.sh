@@ -11,10 +11,10 @@ sagpr_get_PS -f ../coords.xyz -lm 2 -n 3 -l 3 -o PS2 -ns 10 -sm 'seq' -nc 100 -i
 sagpr_get_PS -f ../coords.xyz -lm 2 -n 3 -l 3 -o PS2 -sf PS2 > /dev/null
 
 # build L=0 kernel
-sagpr_get_kernel -lm 0 -z 2 -ps PS0.npy -o KER0 -s PS0_natoms.npy > /dev/null
+sagpr_get_kernel -z 2 -ps PS0.npy -o KER0 -s PS0_natoms.npy > /dev/null
 
 # build L=2 kernel
-sagpr_get_kernel -lm 2 -z 2 -ps PS2.npy -ps0 PS0.npy -o KER2 -s PS2_natoms.npy > /dev/null
+sagpr_get_kernel -z 2 -ps PS2.npy -ps0 PS0.npy -o KER2 -s PS2_natoms.npy > /dev/null
 
 # do cartesian regression
 sagpr_train -r 2 -reg 1e-9 1e-6 -f ../coords.xyz -p alpha -sel 0 5 -w wt_cart -perat -pr -k KER0.npy KER2.npy | tee regression.out > /dev/null

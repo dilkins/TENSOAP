@@ -19,7 +19,7 @@ import scipy.special as sc
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cdef double _radialscaling(double r, double c, double r0, long m):
+cdef double _radialscaling(double r, double c, double r0, double m):
 
     if (m == 0):
         return 1.0
@@ -47,7 +47,7 @@ cdef void _initsoapmolecule(long nspecies,
                            complex[:,:,:,:,:] harmonic,
                            double radial_c,
                            double radial_r0,
-                           long radial_m
+                           double radial_m
                     ):
 
     # Py_ssize_t is the correct C type for Python array indexes
@@ -102,7 +102,7 @@ cdef void _initsoapmolecule(long nspecies,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cdef void _initsoapperiodic(long nspecies,
-                           long ncell,
+                           long[:] ncell,
                            long lmax,
                            long[:] centers,
                            long[:] all_species,
@@ -119,7 +119,7 @@ cdef void _initsoapperiodic(long nspecies,
                            complex[:,:,:,:,:] harmonic,
                            double radial_c,
                            double radial_r0,
-                           long radial_m
+                           double radial_m
                     ):
 
     # Py_ssize_t is the correct C type for Python array indexes
@@ -156,9 +156,9 @@ cdef void _initsoapperiodic(long nspecies,
                     rcy = cell[1,0]*sx + cell[1,1]*sy + cell[1,2]*sz
                     rcz = cell[2,0]*sx + cell[2,1]*sy + cell[2,2]*sz
                     # replicate cell
-                    for ia in xrange(-ncell,ncell+1):
-                        for ib in xrange(-ncell,ncell+1):
-                            for ic in xrange(-ncell,ncell+1):
+                    for ia in xrange(-ncell[0],ncell[0]+1):
+                        for ib in xrange(-ncell[1],ncell[1]+1):
+                            for ic in xrange(-ncell[2],ncell[2]+1):
                                 rrx = rcx + ia*cell[0,0] + ib*cell[0,1] + ic*cell[0,2]
                                 rry = rcy + ia*cell[1,0] + ib*cell[1,1] + ic*cell[1,2]
                                 rrz = rcz + ia*cell[2,0] + ib*cell[2,1] + ic*cell[2,2]
@@ -186,8 +186,7 @@ cdef void _initsoapperiodic(long nspecies,
                                         n = n + 1
             iat = iat + 1
 
-##########################################################################################################
-##########################################################################################################
+#----------------------------------------------------------------------------------------------------------------------------------------
 
 def initsoap(nat,nnmax,nspecies,lmax,centers,all_species,nneighmax,atom_indexes,rcut,coords,cell,all_radial,sigma,sg,nmax,orthomatrix):
     """return initialization variables for SOAP"""
@@ -195,18 +194,22 @@ def initsoap(nat,nnmax,nspecies,lmax,centers,all_species,nneighmax,atom_indexes,
     alpha = 1.0 / (2.0 * sg**2)
     sg2 = sg**2
 
-    nneigh   = np.zeros((nat,nspecies), dtype=int)
-    length   = np.zeros((nat,nspecies,nnmax), dtype=float)
-    efact    = np.zeros((nat,nspecies,nnmax), dtype=float)
-    omega = np.zeros((nat,nspecies,nmax,lmax+1,2*lmax+1),complex)
-    harmonic = np.zeros((nat,nspecies,lmax+1,2*lmax+1,nnmax), dtype=complex)
-    radint = np.zeros((nat,nspecies,nnmax,lmax+1,nmax),float)
+    nneigh      = np.zeros((nat,nspecies), dtype=int)
+    length      = np.zeros((nat,nspecies,nnmax), dtype=float)
+    efact       = np.zeros((nat,nspecies,nnmax), dtype=float)
+    omega       = np.zeros((nat,nspecies,nmax,lmax+1,2*lmax+1),complex)
+    harmonic    = np.zeros((nat,nspecies,lmax+1,2*lmax+1,nnmax), dtype=complex)
+    radint      = np.zeros((nat,nspecies,nnmax,lmax+1,nmax),float)
     orthoradint = np.zeros((nat,nspecies,lmax+1,nmax,nnmax),float)
 
     if (np.sum(cell) == 0.0):
         _initsoapmolecule(nspecies,lmax,centers,all_species,nneighmax,atom_indexes,rcut,alpha,coords,nneigh,length,efact,harmonic,all_radial[0],all_radial[1],all_radial[2])
     else:
-        ncell = 2
+        ncell = np.zeros(3,int)
+        ncell[0] = int(np.round(rcut/np.linalg.norm(cell[:,0])))
+        ncell[1] = int(np.round(rcut/np.linalg.norm(cell[:,1])))
+        ncell[2] = int(np.round(rcut/np.linalg.norm(cell[:,2])))
+
         invcell = np.linalg.inv(cell)
         _initsoapperiodic(nspecies,ncell,lmax,centers,all_species,nneighmax,atom_indexes,rcut,alpha,coords,cell,invcell,nneigh,length,efact,harmonic,all_radial[0],all_radial[1],all_radial[2])
 

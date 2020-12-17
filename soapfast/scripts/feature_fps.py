@@ -19,9 +19,9 @@ def do_fps(x, d=0,initial=-1):
         iy[0] = initial
     # Faster evaluation of Euclidean distance
     # Here we fill the n2 array in this way because it halves the memory cost of this routine
-    n2 = np.array([np.sum(x[i] * np.conj([x[i]])) for i in xrange(len(x))])
+    n2 = np.array([np.sum(x[i] * np.conj([x[i]])) for i in range(len(x))])
     dl = n2 + n2[iy[0]] - 2*np.real(np.dot(x,np.conj(x[iy[0]])))
-    for i in xrange(1,d):
+    for i in range(1,d):
         iy[i] = np.argmax(dl)
         nd = n2 + n2[iy[i]] - 2*np.real(np.dot(x,np.conj(x[iy[i]])))
         dl = np.minimum(dl,nd)
@@ -44,14 +44,16 @@ def do_feature_fps(PS,ncut=1000,initial=-1):
     PS = PS.reshape(degen * npoints * natmax,featsize)
 
     # Get FPS vector
+    if (ncut>featsize):
+        ncut = featsize
     vec_fps = do_fps(PS.T,ncut,initial)
     # Get A matrix.
     C_matr = PS[:,vec_fps]
     UR = np.dot(np.linalg.pinv(C_matr),PS)
     ururt = np.dot(UR,np.conj(UR.T))
     [eigenvals,eigenvecs] = np.linalg.eigh(ururt)
-    print "Lowest eigenvalue = %f"%eigenvals[0]
-    eigenvals = np.array([np.sqrt(max(eigenvals[i],0)) for i in xrange(len(eigenvals))])
+    print("Lowest eigenvalue = %f"%eigenvals[0])
+    eigenvals = np.array([np.sqrt(max(eigenvals[i],0)) for i in range(len(eigenvals))])
     diagmatr = np.diag(eigenvals)
     A_matrix = np.dot(np.dot(eigenvecs,diagmatr),eigenvecs.T)
 

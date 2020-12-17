@@ -4,7 +4,7 @@ import numpy as np
 import sys
 from random import shuffle
 import scipy.linalg
-from regression_utils import *
+from .regression_utils import *
 
 ###############################################################################################################################
 
@@ -21,27 +21,27 @@ def get_weights(ktrain,vtrain_part,mode,jitter):
                 # Choose the smallest jitter term that makes the matrix full-rank
                 ln = len(ktrain)
                 jt = 1.0e-12
-                for mm in xrange(25):
+                for mm in range(25):
                     jt *= 10
                     ktr = ktrain + jt*np.eye(ln)
                     if (np.linalg.matrix_rank(ktr)==ln):
                         break
-                print "Jitter term %e gives full-rank matrix"%jt
+                print("Jitter term %e gives full-rank matrix"%jt)
                 ktrain = ktr
             else:
                 ln = len(ktrain)
                 jt = float(jitter)
                 ktrain = ktrain + jt*np.eye(ln)
-                print "With jitter term %e matrix rank is %i, compared to ideal value of %i."%(jt,np.linalg.matrix_rank(ktrain),ln)
+                print("With jitter term %e matrix rank is %i, compared to ideal value of %i."%(jt,np.linalg.matrix_rank(ktrain),ln))
             return scipy.linalg.solve(ktrain,vtrain_part)
                 
     else:
-        print "INVALID WEIGHTS SOLVING MODE: " + mode
+        print("INVALID WEIGHTS SOLVING MODE: " + mode)
         sys.exit(0)
 
 ###############################################################################################################################
 
-def do_sagpr_spherical(kernel,tens,reg,rank_str='',nat=[],fractrain=1.0,rdm=0,sel=[-1,-1],peratom=False,prediction=False,reg_matr=[],get_meantrain=True,mode='solve',wfile='weights',fnames=['',''],jitter=None):
+def do_sagpr_spherical(kernel,tens,reg,rank_str='',nat=[],fractrain=1.0,rdm=0,sel=[-1,-1],peratom=False,prediction=False,reg_matr=[],get_meantrain=True,mode='solve',wfile='weights',fnames=['',''],jitter=None,get_rmse=False,verbose=True):
 
     # initialize regression
     if (len(np.shape(kernel))==2):
@@ -54,7 +54,7 @@ def do_sagpr_spherical(kernel,tens,reg,rank_str='',nat=[],fractrain=1.0,rdm=0,se
         rank_str = str(lval)
 
     if (nat == []):
-        nat = [1 for i in xrange(len(tens))]
+        nat = [1 for i in range(len(tens))]
 
     if (sel == [0,-1]) or (sel == [0,0]):
         sel = [0,len(tens)]
@@ -68,7 +68,7 @@ def do_sagpr_spherical(kernel,tens,reg,rank_str='',nat=[],fractrain=1.0,rdm=0,se
    
     # If we are doing sparsification, set the training range equal to the entire transformed training set
     if (reg_matr != []):
-        trrange = range(len(tens))
+        trrange = list(range(len(tens)))
         terange = []
         nat = [1 for i in trrange]
 
@@ -119,25 +119,29 @@ def do_sagpr_spherical(kernel,tens,reg,rank_str='',nat=[],fractrain=1.0,rdm=0,se
 
         if peratom:
             corrfile = open("prediction_L" + rank_str + ".txt","w")
-            for i in xrange(ns):
-                print >> corrfile, ' '.join(str(e) for e in list(np.array(vtest[i])*nattest[i])),"  ",' '.join(str(e) for e in list(np.split(outvec,ns)[i]*nattest[i])),"  ",str(nattest[i])
+            for i in range(ns):
+                print(' '.join(str(e) for e in list(np.array(vtest[i])*nattest[i])),"  ",' '.join(str(e) for e in list(np.split(outvec,ns)[i]*nattest[i])),"  ",str(nattest[i]), file=corrfile)
         else:
             corrfile = open("prediction_L" + rank_str + ".txt","w")
-            for i in xrange(ns):
-                print >> corrfile, ' '.join(str(e) for e in vtest[i]), "  ", ' '.join(str(e) for e in list(np.split(outvec,ns)[i]))
+            for i in range(ns):
+                print(' '.join(str(e) for e in vtest[i]), "  ", ' '.join(str(e) for e in list(np.split(outvec,ns)[i])), file=corrfile)
 
         # Print out errors
-        print ""
-        print "testing data points: ", ns
-        print "training data points: ", nt
-        print "--------------------------------"
-        print "RESULTS FOR L=%i MODULI (lambda=%f)"%(lval,reg)
-        print "-----------------------------------------------------"
-        print "STD", np.sqrt(intrins_dev)
-        print "ABS RMSE", np.sqrt(abs_error)
-        print "RMSE = %.4f %%"%(100. * np.sqrt(np.abs(abs_error / intrins_dev)))
+        if verbose:
+            print("")
+            print("testing data points: ", ns)
+            print("training data points: ", nt)
+            print("--------------------------------")
+            print("RESULTS FOR L=%i MODULI (lambda=%f)"%(lval,reg))
+            print("-----------------------------------------------------")
+            print("STD", np.sqrt(intrins_dev))
+            print("ABS RMSE", np.sqrt(abs_error))
+            print("RMSE = %.4f %%"%(100. * np.sqrt(np.abs(abs_error / intrins_dev))))
 
-        return [outvec,np.concatenate(vtest),nattest]
+        if get_rmse:
+            return np.sqrt(abs_error)
+        else:
+            return [outvec,np.concatenate(vtest),nattest]
 
     else:
 
@@ -150,7 +154,7 @@ def get_spherical_tensor_components(tens,rank,threshold):
     # Get spherical components from input tensor
     [all_CS,keep_cols,all_sym] = get_cartesian_to_spherical(rank)
     CS = all_CS[-1]
-    tensor = [np.array(tens[i].split()).astype(float) for i in xrange(len(tens))]
+    tensor = [np.array(tens[i].split()).astype(float) for i in range(len(tens))]
     [spherical_components,keep_list,CR,degen,lin_dep_list,sym_list] = get_spherical_components(tensor,CS,threshold,keep_cols,all_sym)
 
     return [spherical_components,degen,CR,CS,keep_cols,keep_list,lin_dep_list,sym_list]
@@ -175,11 +179,11 @@ def do_prediction_spherical(ktest,rank_str='',weightfile='weights',outfile='pred
 
     # Get weights
     if (weightfile != ''):
-        weights = np.load(weightfile + "_" + rank_str + ".npy")
+        weights = np.load(weightfile + "_" + rank_str + ".npy",allow_pickle=True)
     elif weight_array != []:
         weights = weight_array
     else:
-        print "ERROR: weights must be given!"
+        print("ERROR: weights must be given!")
         sys.exit(0)
 
     # Unpack the array containing the pre-calculated model
@@ -200,7 +204,7 @@ def do_prediction_spherical(ktest,rank_str='',weightfile='weights',outfile='pred
     # Print out predictions
     if outfile != '':
         corrfile = open(outfile + "_L" + rank_str + ".txt","w")
-        for i in xrange(ns):
-            print >> corrfile, ' '.join(str(e) for e in list(np.split(outvec,ns)[i]))
+        for i in range(ns):
+            print(' '.join(str(e) for e in list(np.split(outvec,ns)[i])), file=corrfile)
 
     return outvec
