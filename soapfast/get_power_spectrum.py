@@ -66,7 +66,8 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
     else: 
         max_density = max([len(d)*1.0/d.get_volume() for d in frames])
         nnmax = int(np.floor((4.0/3. *np.pi* rc**3) * max_density * 2))
-#        nnmax = 1000
+        if electro==True:
+            nnmax = 100
 
     if (verbose):
         print("Maximum number of neighbours = %i"%nnmax)

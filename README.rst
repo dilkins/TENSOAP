@@ -13,6 +13,9 @@ This repository contains a Python code for carrying out Symmetry-Adapted Gaussia
 
 5. Félix Musil, Michael J. Willatt, Mikhail A. Langovoy, Michele Ceriotti, "Fast and Accurate Uncertainty Prediction in Chemical Machine Learning", J. Chem. Theory Comput. 15, 906 (2019)
 
+6. Andrea Grisafi, Jigyasa Nigam, Michele Ceriotti, "Multi-scale approach for the prediction of atomic scale properties.", arXiv:2008.12122 (2020)
+
+
 Versions
 ========
 
@@ -26,7 +29,7 @@ The python packages :code:`ase`, :code:`scipy`, :code:`sympy` and :code:`cython`
 Installation
 ============
 
-This program is installed using a makefile, found in the :code:`soapfast` subdirectory. To install the python packages needed, the command :code:`make python` is used. To compile the cython parts of this code, :code:`make cython` is used, and to compile the fortran code needed for long-range descriptors, :code:`make LODE`. The commands :code:`make` or :code:`make all` will compile both the cython and fortran codes. To remove object files run :code:`make clean`.
+This program is installed using a makefile, found in the :code:`soapfast` subdirectory. After editing the variables in this makefile, to install the python packages needed, the command :code:`make python` is used. To compile the cython parts of this code, :code:`make cython` is used, and to compile the fortran code needed for long-range descriptors, :code:`make LODE`. The commands :code:`make` or :code:`make all` will compile both the cython and fortran codes. To remove object files run :code:`make clean`.
 
 Note that the makefile is set up to install python packages only for the current user. If you have the requisite permissions and want instead to install them for all users, the :code:`PIPOPTS` variable in the makefile should be set to a blank string.
 
@@ -644,6 +647,50 @@ Finally, we use the test set to see how good our predictions are, not only of th
   $ paste CALC_NORM.txt PREDICTION_COMMITTEE.np_5000_NORM.txt > calc_pred_uncertainty.txt
 
 As suggested by the name, `calc_pred_uncertainty.txt` has three columns: the calculated dipole moment norm, the dipole moment norm predicted by the eight models, and the estimated uncertainty from this committee. A good test of whether the model is accurately gauging its uncertainty is to compare the norm of the difference between the first two columns (i.e., the residual) with the uncertainty estimate. If the estimated uncertainty does not match the residual (it likely will not), then it should at least be larger than the residual in the majority of cases, meaning that the model is properly "cautious" in its estimates.
+
+12. Application of LODE to the prediction of binding energies 
+-------------------------------------------------------------
+
+In this example, we will learn the binding energy of molecular dimers, in which at least one monomer carries a net charge, using the dataset in :code:`example/charged_dimers`. Each binding trajectory includes 13 displacements plus the isolated monomers (which have zero binding energy). To compute a multiscale LODE(1,1) representation given by the symmetry-adapted tensor product of atom density and potential features, the :code:`-ele` flag is used when computing the power spectrum:
+
+::
+
+  $ sagpr_get_PS -f trajs_with_energies.xyz -sg 0.3 -rc 3.0 -l 4 -n 8 -nn -ele -o LODE
+
+Note that the :code:`-nn` flag ensures that the power spectrum is not normalized. Setting an angular resolution of :code:`-l 4` implies that a linear model for learning the electrostatic energy is mapped to a multipolar expansion of the local electrostatic potential that is implicitly written using spherical multipoles up to L=4. To do so, we first build a linear kernel as the inner product of the LODE(1,1) descriptor:
+
+::
+
+  $ sagpr_get_kernel -ps LODE.npy -o kernel
+
+We then carry out a scalar learning exercise, learning the first 300 sets of 15 configurations at different separations and testing the prediction on the remaining 41 sets:
+
+::
+
+  $ sagpr_train -f trajs_with_energies.xyz -p energy -k kernel.npy -pr -sel 0 4500 -r 0 -reg 1e-6
+
+This gives an RMSE that is 13% of the standard deviation of the test set.
+
+13. Application of LODE to periodic systems
+-------------------------------------------
+
+The LODE descriptor can also be calculated for periodic systems (at present, this has only been implemented for orthorhombic cells). To learn the energy of a periodic system we consider random distributions of NaCl at different bulk densities, modelled as fixed point charges. The :code:`examples/random_nacl` folder contains 2000 frames in :code:`coords_with_energies.xyz`. The periodic implementation of LODE, activated by the :code:`-p` flag, relies on Ewald sumation to represent the atomic potential field in terms of a screened, quickly-varying contribution computed in real space and a smooth long-ranged contribution computed in reciprocal space. The width of the Gaussian used to perform the Ewald splitting of the potential is tuned with the :code:`-sew` flag. To compute the LODE(1,1) representaion coming from a Gaussian density with sigma of 0.3 Angstrom:
+
+::
+
+  $ sagpr_get_PS -f coords_with_energies.xyz -p -ele -sg 0.3 -rc 2.0 -l 0 -n 8 -sew 1.1 -nn -o LODE_periodic
+
+Note that the radial cutoff of the representation :code:`-rc 2.0` is chosen to be smaller than the minimum distance between any pair of ions in the dataset (which is 2.5 Angstrom), while the angular expansion is truncated at `-l 0`. This is because under these limits the LODE representation is expected to converge to a fixed-point charge model as the Gaussian width of the representation goes to zero. In fact, the descriptor so computed can be used to give negligible error. To see this, we first compute a linear kernel:
+
+::
+
+  $ sagpr_get_kernel -ps LODE_periodic.npy -o kernel
+
+We finally carry out a scalar learning exercise, learning the electrostatic energies of 1000 configurations selected at random and testing the predictions on the remaining 1000:
+
+::
+
+  $ sagpr_train -f coords_with_energies.xyz -p energy -k kernel.npy -pr -rdm 1000 -r 0 -reg 1e-10
 
 Contact
 =======
