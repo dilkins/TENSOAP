@@ -13,7 +13,7 @@ import random
 
 ###############################################################################################################################
 
-def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,periodic=False,outfile='',subset=['NO',None],initial=-1,sparsefile='',sparse_options=[''],cen=[],spec=[],atomic=[False,None],all_radial=[1.0,0.0,0.0],useall=False,xyz_slice=[],verbose=True,get_imag=False,norm=True,electro=False,sigewald=1.0,single_radial=False,radsize=50,lebsize=146):
+def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,periodic=False,outfile='',subset=['NO',None],initial=-1,sparsefile='',sparse_options=[''],cen=[],spec=[],atomic=[False,None],all_radial=[1.0,0.0,0.0],useall=False,xyz_slice=[],verbose=True,get_imag=False,norm=True,electro=False,sigewald=1.0,single_radial=False,radsize=50,lebsize=146,average=False):
 
     # If we want a slice of the coordinates, do this BEFORE anything else.
     if (len(xyz_slice)!=0):
@@ -139,7 +139,7 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
     import os
     pname = os.path.dirname(os.path.realpath(__file__))
     if os.path.isfile(pname + "/utils/LODE/gvectors.so"):
-        [power,featsize] = psutil.compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,all_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize)
+        [power,featsize] = psutil.compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,all_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize,average)
     else:
         [power,featsize] = psutil.compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,all_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose)
     if (verbose):
@@ -153,14 +153,20 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
     if sparsefile != '':
         if (verbose):
             print("We have already sparsified the power spectrum with pre-loaded parameters.")
-        psparse = power.reshape((2*lam+1)*npoints*natmax,len(sparse_options[1]))
+        if average:
+            psparse = power.reshape((2*lam+1)*npoints,len(sparse_options[1]))
+        else:
+            psparse = power.reshape((2*lam+1)*npoints*natmax,len(sparse_options[1]))
         featsize = len(psparse[0])
     elif ncut > 0:
         # We have not provided a file with sparsification details, but we do want to sparsify, so we'll do it from scratch.
         if (verbose):
             print("Doing farthest-point sampling sparsification.")
         sparsefilename = "PS" + str(lam)+"_nconf"+str(npoints)+"_sigma"+str(sg)+"_lmax"+str(lmax)+"_nmax"+str(nmax)+"_cutoff"+str(rc)+"_cweight"+str(cw)+"_init"+str(featsize)
-        [psparse,sparse_details] = psutil.FPS_sparsify(power.reshape((2*lam+1)*npoints*natmax,featsize),featsize,ncut,initial)
+        if average:
+            [psparse,sparse_details] = psutil.FPS_sparsify(power.reshape((2*lam+1)*npoints,featsize),featsize,ncut,initial)
+        else:
+            [psparse,sparse_details] = psutil.FPS_sparsify(power.reshape((2*lam+1)*npoints*natmax,featsize),featsize,ncut,initial)
         featsize = len(psparse[0])
         if (verbose):
             print("Saving sparsification details")
@@ -172,60 +178,78 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
     else:
         if (verbose):
             print("Power spectrum will not be sparsified.")
-        psparse = power.reshape((2*lam+1)*npoints*natmax,featsize)
+        if average:
+            psparse = power.reshape((2*lam+1)*npoints,featsize)
+        else:
+            psparse = power.reshape((2*lam+1)*npoints*natmax,featsize)
     
     if (verbose):   
         print("done", time.time()-start_sparse) 
         print("final feature space dimension", featsize)
 
     # Make the power spectrum real and normalize it
-    if (lam==0):
-        power = psparse.reshape(npoints,natmax,featsize)
-        power = np.real(power)
-        if (norm):
-            for i in range(npoints):
-                for iat in range(ncen[i]):
-                    inner = np.dot(power[i,iat],power[i,iat])
-                    power[i,iat] /= np.sqrt(inner)
-    else:
-        power = psparse.reshape(npoints,natmax,2*lam+1,featsize)
-        CC = np.conj(regression_utils.complex_to_real_transformation([2*lam+1])[0])
-        if (not get_imag):
-            # even combinations for l1+l2+lam are considered 
-            power = np.real(np.einsum('ab,cdbe->cdae',CC,power))
-        else:
-            # odd combinations for l1+l2+lam are considered 
-            power = np.imag(np.einsum('ab,cdbe->cdae',CC,power))
-        if (norm):
-            for i in range(npoints):
-                for iat in range(ncen[i]):
-                    inner = np.zeros((2*lam+1,2*lam+1),complex)
-                    for mu in range(2*lam+1):
-                        for nu in range(2*lam+1):
-                            inner[mu,nu] = np.dot(power[i,iat,mu],np.conj(power[i,iat,nu]))
-                    power[i,iat] /= np.sqrt(np.real(np.linalg.norm(inner)))
-
-
-    # Reorder the power spectrum so that the ordering of the atoms matches their positions in the frame.
-    for i in range(npoints):
+    if average:
         if (lam==0):
-            ps_row = np.zeros((len(power[0]),len(power[0,0])),dtype=float)
+            power = psparse.reshape(npoints,featsize)
+            power = np.real(power)
         else:
-            ps_row = np.zeros((len(power[0]),len(power[0,0]),len(power[0,0,0])),dtype=float)
-        # Reorder this row
-        reorder_list = [[] for cen in centers]
-        atnum = frames[i].get_atomic_numbers()
-        for j in range(len(atnum)):
-            atom = atnum[j]
-            if (atom in centers):
-                place = list(centers).index(atom)
-                reorder_list[place].append(j)
-        reorder_list = sum(reorder_list,[])
-        # The reordering list tells us where each column of the current power spectrum should go.
-        for j in range(len(reorder_list)):
-            ps_row[reorder_list[j]] = power[i,j]
-        # Insert the reordered row back into the power spectrum
-        power[i] = ps_row
+            power = psparse.reshape(npoints,2*lam+1,featsize)
+            CC = np.conj(regression_utils.complex_to_real_transformation([2*lam+1])[0])
+            if (not get_imag):
+                # even combinations for l1+l2+lam are considered 
+                power = np.real(np.einsum('ab,cbe->cae',CC,power))
+            else:
+                # odd combinations for l1+l2+lam are considered 
+                power = np.imag(np.einsum('ab,cbe->cae',CC,power))
+    else:
+        if (lam==0):
+            power = psparse.reshape(npoints,natmax,featsize)
+            power = np.real(power)
+            if (norm):
+                for i in range(npoints):
+                    for iat in range(ncen[i]):
+                        inner = np.dot(power[i,iat],power[i,iat])
+                        power[i,iat] /= np.sqrt(inner)
+        else:
+            power = psparse.reshape(npoints,natmax,2*lam+1,featsize)
+            CC = np.conj(regression_utils.complex_to_real_transformation([2*lam+1])[0])
+            if (not get_imag):
+                # even combinations for l1+l2+lam are considered 
+                power = np.real(np.einsum('ab,cdbe->cdae',CC,power))
+            else:
+                # odd combinations for l1+l2+lam are considered 
+                power = np.imag(np.einsum('ab,cdbe->cdae',CC,power))
+            if (norm):
+                for i in range(npoints):
+                    for iat in range(ncen[i]):
+                        inner = np.zeros((2*lam+1,2*lam+1),complex)
+                        for mu in range(2*lam+1):
+                            for nu in range(2*lam+1):
+                                inner[mu,nu] = np.dot(power[i,iat,mu],np.conj(power[i,iat,nu]))
+                        power[i,iat] /= np.sqrt(np.real(np.linalg.norm(inner)))
+
+
+    if not average:
+        # Reorder the power spectrum so that the ordering of the atoms matches their positions in the frame.
+        for i in range(npoints):
+            if (lam==0):
+                ps_row = np.zeros((len(power[0]),len(power[0,0])),dtype=float)
+            else:
+                ps_row = np.zeros((len(power[0]),len(power[0,0]),len(power[0,0,0])),dtype=float)
+            # Reorder this row
+            reorder_list = [[] for cen in centers]
+            atnum = frames[i].get_atomic_numbers()
+            for j in range(len(atnum)):
+                atom = atnum[j]
+                if (atom in centers):
+                    place = list(centers).index(atom)
+                    reorder_list[place].append(j)
+            reorder_list = sum(reorder_list,[])
+            # The reordering list tells us where each column of the current power spectrum should go.
+            for j in range(len(reorder_list)):
+                ps_row[reorder_list[j]] = power[i,j]
+            # Insert the reordered row back into the power spectrum
+            power[i] = ps_row
 
     # Print power spectrum, if we have not asked for only a sample to be taken (we assume that taking a subset is just for the purpose of generating a sparsification)
     if (subset[0] == 'NO'):
@@ -265,8 +289,9 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
         else:
             np.save(PS_file + ".npy",power)
 
-        # Print number of atoms, to be used with kernel building
-        np.save(PS_file + '_natoms.npy',nat)
+        if not average:
+            # Print number of atoms, to be used with kernel building
+            np.save(PS_file + '_natoms.npy',nat)
     
     if (verbose):
         print("Full calculation of power spectrum complete")
@@ -283,8 +308,8 @@ def main():
     pname = os.path.dirname(os.path.realpath(__file__))
     if os.path.isfile(pname + "/utils/LODE/gvectors.so"):
         args = parse.add_command_line_arguments_PS("Calculate power spectrum")
-        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm,electro,sigewald,single_radial,radsize,lebsize] = parse.set_variable_values_PS(args)
-        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm),electro=electro,sigewald=sigewald,single_radial=single_radial,radsize=radsize,lebsize=lebsize)
+        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm,electro,sigewald,single_radial,radsize,lebsize,average] = parse.set_variable_values_PS(args)
+        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm),electro=electro,sigewald=sigewald,single_radial=single_radial,radsize=radsize,lebsize=lebsize,average=average)
     else:
         args = parse.add_command_line_arguments_PS("Calculate power spectrum")
         [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm] = parse.set_variable_values_PS(args)

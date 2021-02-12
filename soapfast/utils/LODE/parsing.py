@@ -41,6 +41,7 @@ def add_command_line_arguments_PS(parsetext):
     parser.add_argument("-srad", "--sradial",                    action='store_true',                   help="Use for single radial channel representations")
     parser.add_argument("-rad", "--radsize", type=int,  default=50,                                 help="Dimension of the Gauss-Legendre grid needed for the numerical radial integration of the direct-space potential")
     parser.add_argument("-leb", "--lebsize", type=int,  default=146,                                 help="Dimension of the Lebedev grid needed for the numerical angular integration of the direct-space potential. Choose among [6, 14, 26, 38, 50, 74, 86, 110, 146, 170, 194, 230, 266, 302, 350, 434, 590, 770, 974, 1202, 1454, 1730, 2030 (army grade), 2354, 2702, 3074, 3470, 3890, 4334, 4802, 5294, 5810]")
+    parser.add_argument("-ave",  "--average",                  action='store_true',                      help="Structural averaged features?")
 
     args = parser.parse_args()
     return args
@@ -53,6 +54,7 @@ def set_variable_values_PS(args):
     leb = args.lebsize
     srad = args.sradial
     ele = args.electro
+    ave = args.average
     sew = args.sigewald               # Gaussian width
     nmax = args.nmax              # number of radial functions
     lmax = args.lmax              # number of angular functions
@@ -130,6 +132,6 @@ def set_variable_values_PS(args):
             sys.exit(0)
         xyz_slice = [args.slice[0],args.slice[1]]
 
-    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag,args.nonorm,ele,sew,srad,rad,leb]
+    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag,args.nonorm,ele,sew,srad,rad,leb,ave]
 
 #########################################################################

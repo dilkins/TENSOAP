@@ -33,7 +33,7 @@ def setup_orthomatrix(nmax,rc):
 
 ##################################################################################################################
 
-def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,atom_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize):
+def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,atom_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize,average):
 
     # compute the second kind orthogonal projections from the SOAP density or potential 
     if electro == True:
@@ -99,10 +99,16 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
         do_list = range(featsize)
 
     # Allocate arrays
-    if lam == 0:
-        PS = np.zeros((npoints,natmax,len(do_list)),dtype=complex)
+    if average:
+        if lam == 0:
+            PS = np.zeros((npoints,len(do_list)),dtype=complex)
+        else:
+            PS = np.zeros((npoints,2*lam+1,len(do_list)),dtype=complex)
     else:
-        PS = np.zeros((npoints,natmax,2*lam+1,len(do_list)),dtype=complex)
+        if lam == 0:
+            PS = np.zeros((npoints,natmax,len(do_list)),dtype=complex)
+        else:
+            PS = np.zeros((npoints,natmax,2*lam+1,len(do_list)),dtype=complex)
 
     # Padding for verbose mode:
     npad = len(str(npoints))
@@ -227,13 +233,19 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
 
                     power = np.einsum('asblm,adnlm->asdbnl',omegatrue,omegaconj)
                     power = power.reshape(nat[i],featsize)
-                    PS[i,:nat[i]] = power[:,do_list]
+                    if average:
+                        PS[i] = np.sum(power[:,do_list],axis=0)/nat[i]
+                    else:
+                        PS[i,:nat[i]] = power[:,do_list]
 
                 else:
 
                     power = np.einsum('asblm,adblm->asdbl',omegatrue,omegaconj)
                     power = power.reshape(nat[i],featsize)
-                    PS[i,:nat[i]] = power[:,do_list]
+                    if average:
+                        PS[i] = np.sum(power[:,do_list],axis=0)/nat[i]
+                    else:
+                        PS[i,:nat[i]] = power[:,do_list]
 
             else:
 
@@ -243,7 +255,10 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                     comp = keep_components[cc]
                     for iat in range(nat[i]):
                         power[iat,cc] = np.dot(omegatrue[iat,comp[0],comp[2],comp[4],:],omegaconj[iat,comp[1],comp[3],comp[4],:])
-                PS[i,:nat[i]] = power[:]
+                if average:
+                    PS[i] = np.sum(power[:],axis=0)/nat[i]
+                else:
+                    PS[i,:nat[i]] = power[:]
 
         
     else:
@@ -375,7 +390,10 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                     for l in range(llmax):
                         p2[:,:,:,:,:,:,l] = power[:,:,:,:,:,:,lvalues[l][0],lvalues[l][1]]
                     p2 = p2.reshape(nat[i],2*lam+1,featsize)
-                    PS[i,:nat[i]] = p2[:,:,do_list]
+                    if average:
+                        PS[i] = np.sum(power[:,:,do_list],axis=0)/nat[i]
+                    else:
+                        PS[i,:nat[i]] = power[:,:,do_list]
 
                 else:
 
@@ -389,7 +407,10 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                     for l in range(llmax):
                         p2[:,:,:,:,:,l] = power[:,:,:,:,:,lvalues[l][0],lvalues[l][1]]
                     p2 = p2.reshape(nat[i],2*lam+1,featsize)
-                    PS[i,:nat[i]] = p2[:,:,do_list]
+                    if average:
+                        PS[i] = np.sum(power[:,:,do_list],axis=0)/nat[i]
+                    else:
+                        PS[i,:nat[i]] = power[:,:,do_list]
 
             else:
 
@@ -404,7 +425,10 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                                 if abs(im-l1-lm+lam) <= l2:
                                     harmconj[:,:,l2,l1,im,lm,:] = np.conj(harmonic1[:,:,l2,l2+im-l1-lm+lam,:])
                             power[iat,lm,cc] = np.einsum('a,b,ab,a',omega2[iat,ia,nn,l1,:],orthoradint1[iat,ib,l2,mm,:],harmconj[iat,ib,l2,l1,:,lm,:],w3j[lm,l1,l2,:])
-                PS[i,:nat[i]] = power
+                if average:
+                    PS[i] = np.sum(power,axis=0)/nat[i]
+                else:
+                    PS[i,:nat[i]] = power
 
     # Multiply by A_matrix.
     if (sparse_options[0] != ''):
