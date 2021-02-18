@@ -13,7 +13,7 @@ import random
 
 ###############################################################################################################################
 
-def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,periodic=False,outfile='',subset=['NO',None],initial=-1,sparsefile='',sparse_options=[''],cen=[],spec=[],atomic=[False,None],all_radial=[1.0,0.0,0.0],useall=False,xyz_slice=[],verbose=True,get_imag=False,norm=True,electro=False,sigewald=1.0,single_radial=False,radsize=50,lebsize=146,average=False):
+def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,periodic=False,outfile='',subset=['NO',None],initial=-1,sparsefile='',sparse_options=[''],cen=[],spec=[],atomic=[False,None],all_radial=[1.0,0.0,0.0],useall=False,xyz_slice=[],verbose=True,get_imag=False,norm=True,electro=False,sigewald=1.0,single_radial=False,radsize=50,lebsize=146,average=False,censort=False):
 
     # If we want a slice of the coordinates, do this BEFORE anything else.
     if (len(xyz_slice)!=0):
@@ -230,26 +230,32 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
 
 
     if not average:
-        # Reorder the power spectrum so that the ordering of the atoms matches their positions in the frame.
-        for i in range(npoints):
-            if (lam==0):
-                ps_row = np.zeros((len(power[0]),len(power[0,0])),dtype=float)
-            else:
-                ps_row = np.zeros((len(power[0]),len(power[0,0]),len(power[0,0,0])),dtype=float)
-            # Reorder this row
-            reorder_list = [[] for cen in centers]
-            atnum = frames[i].get_atomic_numbers()
-            for j in range(len(atnum)):
-                atom = atnum[j]
-                if (atom in centers):
-                    place = list(centers).index(atom)
-                    reorder_list[place].append(j)
-            reorder_list = sum(reorder_list,[])
-            # The reordering list tells us where each column of the current power spectrum should go.
-            for j in range(len(reorder_list)):
-                ps_row[reorder_list[j]] = power[i,j]
-            # Insert the reordered row back into the power spectrum
-            power[i] = ps_row
+    
+        if not censort:
+
+            # Reorder the power spectrum so that the ordering of the atoms matches their positions in the frame.
+            for i in range(npoints):
+                if (lam==0):
+                    ps_row = np.zeros((len(power[0]),len(power[0,0])),dtype=float)
+                else:
+                    ps_row = np.zeros((len(power[0]),len(power[0,0]),len(power[0,0,0])),dtype=float)
+                # Reorder this row
+                reorder_list = [[] for cen in centers]
+                atnum = frames[i].get_atomic_numbers()
+                for j in range(len(atnum)):
+                    atom = atnum[j]
+                    if (atom in centers):
+                        place = list(centers).index(atom)
+                        reorder_list[place].append(j)
+                reorder_list = sum(reorder_list,[])
+                # The reordering list tells us where each column of the current power spectrum should go.
+                for j in range(len(reorder_list)):
+                    ps_row[reorder_list[j]] = power[i,j]
+                # Insert the reordered row back into the power spectrum
+                power[i] = ps_row
+        else:
+
+            print("Power spectrum entries sorted according to atomic centers list.")
 
     # Print power spectrum, if we have not asked for only a sample to be taken (we assume that taking a subset is just for the purpose of generating a sparsification)
     if (subset[0] == 'NO'):
@@ -308,12 +314,12 @@ def main():
     pname = os.path.dirname(os.path.realpath(__file__))
     if os.path.isfile(pname + "/utils/LODE/gvectors.so"):
         args = parse.add_command_line_arguments_PS("Calculate power spectrum")
-        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm,electro,sigewald,single_radial,radsize,lebsize,average] = parse.set_variable_values_PS(args)
-        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm),electro=electro,sigewald=sigewald,single_radial=single_radial,radsize=radsize,lebsize=lebsize,average=average)
+        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm,electro,sigewald,single_radial,radsize,lebsize,average,censort] = parse.set_variable_values_PS(args)
+        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm),electro=electro,sigewald=sigewald,single_radial=single_radial,radsize=radsize,lebsize=lebsize,average=average,censort=censort)
     else:
         args = parse.add_command_line_arguments_PS("Calculate power spectrum")
-        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm] = parse.set_variable_values_PS(args)
-        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm))
+        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm,censort] = parse.set_variable_values_PS(args)
+        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm),censort=censort)
 
 if __name__=="__main__":
     from utils import regression_utils
