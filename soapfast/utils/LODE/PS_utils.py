@@ -391,9 +391,9 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                         p2[:,:,:,:,:,:,l] = power[:,:,:,:,:,:,lvalues[l][0],lvalues[l][1]]
                     p2 = p2.reshape(nat[i],2*lam+1,featsize)
                     if average:
-                        PS[i] = np.sum(power[:,:,do_list],axis=0)/nat[i]
+                        PS[i] = np.sum(p2[:,:,do_list],axis=0)/nat[i]
                     else:
-                        PS[i,:nat[i]] = power[:,:,do_list]
+                        PS[i,:nat[i]] = p2[:,:,do_list]
 
                 else:
 
@@ -408,9 +408,9 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                         p2[:,:,:,:,:,l] = power[:,:,:,:,:,lvalues[l][0],lvalues[l][1]]
                     p2 = p2.reshape(nat[i],2*lam+1,featsize)
                     if average:
-                        PS[i] = np.sum(power[:,:,do_list],axis=0)/nat[i]
+                        PS[i] = np.sum(p2[:,:,do_list],axis=0)/nat[i]
                     else:
-                        PS[i,:nat[i]] = power[:,:,do_list]
+                        PS[i,:nat[i]] = p2[:,:,do_list]
 
             else:
 
