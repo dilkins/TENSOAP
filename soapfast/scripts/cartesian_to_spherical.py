@@ -5,7 +5,7 @@ import sys,os
 import numpy as np
 from ase.io import read,write
 
-def cartesian_to_spherical(tens,ftrs,rank = -1,outfile = '', threshold = 1e-6, property_to_convert = ''):
+def cartesian_to_spherical(tens,ftrs,rank = -1,outfile = '', threshold = 1e-6, property_to_convert = '',atomic = False):
 
     ndata = len(tens)
     num_elem = len(tens[0].split())
@@ -44,18 +44,43 @@ def cartesian_to_spherical(tens,ftrs,rank = -1,outfile = '', threshold = 1e-6, p
     
     # Print out these components to files
     if outfile != '':
-        for i in range(len(keep_cols[-1])):
-            if (np.linalg.norm(all_tens_sphr[i][:]) > threshold):
-                # If we have an L=1 spherical harmonic, then the descriptor string needs to be changed
-                if (len(keep_cols[-1][i]) == 1):
-                    keep_num = '1'
-                else:
-                    keep_num = ''.join(map(str,keep_cols[-1][i][1:]))
-                prop_out = property_to_convert + "_L" + keep_num
-                print("  Outputting property %s to %s"%(prop_out,outfile))
-                for j in range(ndata):
-                    to_print = np.real(all_tens_sphr[i][j])
-                    ftrs[j].info[prop_out] = to_print
+        if (not atomic):
+            for i in range(len(keep_cols[-1])):
+                if (np.linalg.norm(all_tens_sphr[i][:]) > threshold):
+                    # If we have an L=1 spherical harmonic, then the descriptor string needs to be changed
+                    if (len(keep_cols[-1][i]) == 1):
+                        keep_num = '1'
+                    else:
+                        keep_num = ''.join(map(str,keep_cols[-1][i][1:]))
+                    prop_out = property_to_convert + "_L" + keep_num
+                    print("  Outputting property %s to %s"%(prop_out,outfile))
+                    for j in range(ndata):
+                        to_print = np.real(all_tens_sphr[i][j])
+                        ftrs[j].info[prop_out] = to_print
+        else:
+            # We are converting atomic properties
+            for i in range(len(keep_cols[-1])):
+                if (np.linalg.norm(all_tens_sphr[i][:]) > threshold):
+                    # If we have an L=1 spherical harmonic, then the descriptor string needs to be changed
+                    if (len(keep_cols[-1][i]) == 1):
+                        keep_num = '1'
+                    else:
+                        keep_num = ''.join(map(str,keep_cols[-1][i][1:]))
+                    prop_out = property_to_convert + "_L" + keep_num
+                    print("  Outputting property %s to %s"%(prop_out,outfile))
+                    for j in range(len(ftrs)):
+                        ftrs[j].arrays[prop_out] = [None for i in range(len(ftrs[j]))]
+                    nfr = 0
+                    nat = -1
+                    for j in range(ndata):
+                        to_print = np.real(all_tens_sphr[i][j])
+                        nat += 1
+                        if (nat==len(ftrs[nfr])):
+                            nat = 0
+                            nfr += 1
+                        ftrs[nfr].arrays[prop_out][nat] = to_print
+                    for j in range(len(ftrs)):
+                        ftrs[j].arrays[prop_out] = np.array(ftrs[j].arrays[prop_out])
         
         write(outfile,ftrs)
     else:
@@ -66,11 +91,12 @@ def cartesian_to_spherical(tens,ftrs,rank = -1,outfile = '', threshold = 1e-6, p
 def main():
 
     parser = argparse.ArgumentParser(description="Convert Cartesian to spherical tensors",formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-f", "--files",                 required=True, help="Files to convert")
-    parser.add_argument("-o", "--output",                default='',    help="Output file")
-    parser.add_argument("-p", "--property",              required=True, help="Property to convert")
-    parser.add_argument("-r", "--rank",                  required=True, help="Tensor rank")
-    parser.add_argument("-t", "--threshold", type=float, default=1e-6,  help="Threshold for tensor values being zero")
+    parser.add_argument("-f", "--files",                 required=True,       help="Files to convert")
+    parser.add_argument("-o", "--output",                default='',          help="Output file")
+    parser.add_argument("-p", "--property",              required=True,       help="Property to convert")
+    parser.add_argument("-r", "--rank",                  required=True,       help="Tensor rank")
+    parser.add_argument("-t", "--threshold", type=float, default=1e-6,        help="Threshold for tensor values being zero")
+    parser.add_argument("-a", "--atomic",                action='store_true', help="Atomic property")
     args = parser.parse_args()
     
     file_to_convert = args.files
@@ -85,14 +111,19 @@ def main():
     
     # Read in tensor file
     ftrs = read(file_to_convert,':')
-    if rank == 0:
-        tens = [str(ftrs[i].info[args.property]) for i in range(len(ftrs))]
-    elif rank == 2:
-        tens = [' '.join(np.concatenate(ftrs[i].info[args.property]).astype(str)) for i in range(len(ftrs))]
+    if (not args.atomic):
+        if rank == 0:
+            tens = [str(ftrs[i].info[args.property]) for i in range(len(ftrs))]
+        else:
+            tens = [' '.join(np.array(ftrs[i].info[args.property]).astype(str)) for i in range(len(ftrs))]
     else:
-        tens = [' '.join(np.array(ftrs[i].info[args.property]).astype(str)) for i in range(len(ftrs))]
+        if rank == 0:
+            tens = np.concatenate([ftrs[i].arrays[args.property] for i in range(len(ftrs))]).astype(str)
+        else:
+            vc = np.concatenate(np.array([ftrs[i].arrays[args.property] for i in range(len(ftrs))]))
+            tens = [' '.join(vc[i].astype(str)) for i in range(len(vc))]
     
-    cartesian_to_spherical(tens,ftrs,rank=rank,outfile=outfile,threshold=args.threshold,property_to_convert=property_to_convert)
+    cartesian_to_spherical(tens,ftrs,rank=rank,outfile=outfile,threshold=args.threshold,property_to_convert=property_to_convert,atomic=args.atomic)
 
 if __name__=="__main__":
 
