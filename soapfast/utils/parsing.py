@@ -299,8 +299,8 @@ def set_variable_values_kernel(args):
     else:
         degen = len(PS[0][0,0])
         lam = (degen-1) / 2
-        if ((zeta > 1) and (args.power0 == None)):
-            print("ERROR: lambda=0 power spectrum must be specified for zeta > 1!")
+        if ((zeta > 1) and (args.power0 == "")):
+            print("ERROR: lambda=0 power spectrum must be specified for spherical kernel with zeta > 1!")
             sys.exit(0)
         for i in range(2):
             if (len(PS[i][0,0]) != 2*lam+1):
