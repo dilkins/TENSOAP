@@ -125,7 +125,7 @@ This creates :code:`PS1.npy`, which contains the full power spectrum. The next s
 ::
 
   $ sagpr_get_PS -lm 0 -f coords_1000.xyz -o PS0
-  $ sagpr_get_kernel -z 2 -ps PS1.npy -ps0 PS0.npy -s PS0_natoms.npy -o kernel1
+  $ sagpr_get_kernel -z 2 -ps PS1.npy -ps0 PS0.npy -s PS1_natoms.npy -o kernel1
 
 We now use the kernel built to perform regression. Rather than do the regression and prediction in one go, we instead demonstrate the generation of an SA-GPR model using :code:`sagpr_train` and the prediction of the dipole moments using :code:`sagpr_prediction`. Firstly we train an SA-GPR model:
 
@@ -237,8 +237,8 @@ Rather than learning the full polarizability of the water monomers, as in exampl
 ::
 
   $ cd example/water_monomer
-  $ sagpr_get_PS -lm 0 -f coords_1000.xyz
-  $ sagpr_get_PS -lm 2 -f coords_1000.xyz
+  $ sagpr_get_PS -lm 0 -f coords_1000.xyz -o PS0
+  $ sagpr_get_PS -lm 2 -f coords_1000.xyz -o PS2
   $ sagpr_get_kernel -z 2 -ps PS2.npy -ps0 PS0.npy -s PS2_natoms.npy -o kernel2
 
 Because we have not specified any centres, the code will take all of the atoms present as centres (i.e., H and O). Note that in this case, we have rebuilt the L=0 power spectrum as well, for creation of the nonlinear kernel. We don't actually need this power spectrum, as we could use our old power spectra centered only on O -- so this can be used instead if the user prefers.
