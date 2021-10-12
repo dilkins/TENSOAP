@@ -179,7 +179,7 @@ The file :code:`compare_cartesian.out` contains the correct values of the dipole
 
 ::
 
-  $ paste compare_cartesian.out prediction_cartesian.txt | awk 'BEGIN{err=0.0;n=0}{n++;err += ($1 - $4)**2 + ($2 - $5)**2 + ($3 - $6)**2}END{print (err/n)**0.5}'
+  $ paste compare_cartesian.out prediction_cartesian.txt | awk 'BEGIN{err=0.0;n=0}{n++;err += ($1 - $4)^2 + ($2 - $5)^2 + ($3 - $6)^2}END{print (err/n)^0.5}'
 
 we find a root mean squared error of 0.003 a.u., which can be compared to the root mean square dipole moment of 0.675 a.u., for an intrinsic error of about 0.5%.
 
@@ -227,7 +227,7 @@ Having obtained these kernels, we will build a SA-GPR model to predict the polar
 
   $ sagpr_train -r 2 -reg 1e-8 1e-5 -f coords_1000.xyz -k kernel0.npy kernel2.npy -p alpha -rdm 500 -pr -t 1.0
 
-The errors in doing this prediction are quite high, but we could decrease them by retaining more spherical components when sparsifying. Note that the :code:`-t 1.0` flag ensures we do not learn the apparent L=1 component of this tensor. We set the threshold for discounting a component at 1.0 atomic units, meaning that we learn the L=0 and L=2, but not the L=1. This threshold should be set according to the error in calculation of the alpha tensor. Note that if we would like to learn this component (i.e. if it it physical), this can be done by computing an L=1 kernel and including this in the arguments, without the threshold flag.
+The errors in doing this prediction are quite high, but we could decrease them by retaining more spherical components when sparsifying. Note that the :code:`-t 1.0` flag ensures we do not learn the apparent L=1 component of this tensor. We set the threshold for discounting a component at 1.0 atomic units, meaning that we learn the L=0 and L=2, but not the L=1. This threshold should be set according to the error in calculation of the alpha tensor. Note that if we would like to learn this component (i.e. if it is physical), this can be done by computing an L=1 kernel and including this in the arguments, without the threshold flag.
 
 4. Water Monomer - Spherical Tensor Learning
 --------------------------------------------
