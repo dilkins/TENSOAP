@@ -28,7 +28,7 @@ ftrs = read(file_to_convert,':')
 if rank == 0:
     tens = [str(ftrs[i].info[args.property]) for i in range(len(ftrs))]
 elif rank == 2:
-    tens = [' '.join(np.concatenate(ftrs[i].info[args.property]).astype(str)) for i in range(len(ftrs))]
+    tens = [' '.join(np.concatenate(ftrs[i].info[args.property][np.newaxis,:]).astype(str)) for i in range(len(ftrs))]
 else:
     tens = [' '.join(np.array(ftrs[i].info[args.property]).astype(str)) for i in range(len(ftrs))]
 ndata = len(tens)
