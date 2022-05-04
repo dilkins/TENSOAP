@@ -126,6 +126,7 @@ cdef void _initsoapperiodic(long nspecies,
     cdef Py_ssize_t icentype,centype,icen,cen,ispe,ineigh,neigh,ia,ib,ic,lval,mval,im,n 
     cdef double rx,ry,rz,rcx,rcy,rcz,sx,sy,sz,ph,th,r2,rdist,rrx,rry,rrz
 
+    nnmax = length.shape[2]
     iat = 0
     ncentype = len(centers)
     # loop over species to center on
@@ -165,6 +166,9 @@ cdef void _initsoapperiodic(long nspecies,
                                 r2 = rrx**2 + rry**2 + rrz**2
                                 # within cutoff ?
                                 if r2 <= rcut**2:
+                                    if n > nnmax:
+                                        print "The number of nearest neighbours exceeds the estimated maximum. Please reduce the value of the flag vol_frac when calling get_power_spectrum."
+                                        sys.exit()
                                     # central atom ?
                                     if neigh == cen and ia==0 and ib==0 and ic==0:
                                         length[iat,ispe,n]  = 0.0
