@@ -57,7 +57,7 @@ def fourier_ewald(sigewald,nat,nnmax,nspecies,lmax,centers,all_species,nneighmax
 #    print "G-contraction :", time.time()-start4, "seconds"
 
 #    print "-----------------------------------------"
-    print("reciprocal space potential computed in", time.time()-start, "seconds")
+    #print("reciprocal space potential computed in", time.time()-start, "seconds")
 
     omega *= 16.0*np.pi**2/volume      
 

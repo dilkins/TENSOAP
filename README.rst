@@ -1,7 +1,7 @@
-SA-GPR
-======
+TENSOAP
+=======
 
-This repository contains a Python code for carrying out Symmetry-Adapted Gaussian Process Regression (SA-GPR) for the machine-learning of tensors. For more information, see:
+This repository contains a Python code for carrying out Symmetry-Adapted Gaussian Process Regression (SA-GPR) for the machine-learning of tensors, using SOAP and LODE features. For more information, see:
 
 1. Andrea Grisafi, David M. Wilkins, Gabor Csányi, Michele Ceriotti, "Symmetry-Adapted Machine Learning for Tensorial Properties of Atomistic Systems", Phys. Rev. Lett. 120, 036002 (2018)
 
@@ -19,7 +19,7 @@ This repository contains a Python code for carrying out Symmetry-Adapted Gaussia
 Versions
 ========
 
-The current version of SOAPFAST (v3.0.1) is written in python 3. It has the same functionality as the previous release (v2.3), which is written in python 2.
+The current version of TENSOAP (v3.0.1) is written in python 3. It has the same functionality as the previous release (v2.3), which is written in python 2.
 
 Requirements
 ============

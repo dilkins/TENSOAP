@@ -100,8 +100,8 @@ def direct_potential(nat,nnmax,nspecies,lmax,centers,all_species,nneighmax,atom_
 
 
     #print "-----------------------------------------"
-    print("Direct space potential computed in", time.time()-start, "seconds")
-    print("")
+    #print("Direct space potential computed in", time.time()-start, "seconds")
+    #print("")
 
     return omega_near
 

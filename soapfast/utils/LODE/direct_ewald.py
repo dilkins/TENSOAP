@@ -60,8 +60,8 @@ def direct_ewald(sigewald,cell,nat,nnmax,nspecies,lmax,centers,all_species,nneig
     omega_near = nearfield_ewald.nearfield(nat,nspecies,nmax,lmax,lebsize*radsize,nneigh_near,nnmax,alpha,coordx_near,spherical_grid,orthoradial,harmonics,integration_weights,sigewald) 
     omega_near = np.transpose(omega_near,(4,3,2,1,0))
 
-    print("direct space potential computed in", time.time()-start, "seconds")
-    print("")
+    #print("direct space potential computed in", time.time()-start, "seconds")
+    #print("")
 
     return omega_near
 

@@ -177,6 +177,7 @@ def add_command_line_arguments_PS(parsetext):
     parser.add_argument("-sl", "--slice",         type=int,   default=-1,    nargs='+',                 help="Choose a slice of the input frames to calculate the power spectrum")
     parser.add_argument("-im", "--imag",                      action='store_true',                      help="Get imaginary power spectrum for building SO(3) kernel")
     parser.add_argument("-nn", "--nonorm",                    action='store_true',                      help="Do not normalize power spectrum")
+    parser.add_argument("-cs",   "--centersorting",          action='store_true',                 help="Sort power spectrum entries according to atomic centers list.")
 
     args = parser.parse_args()
     return args
@@ -205,6 +206,7 @@ def set_variable_values_PS(args):
     fname = args.fname
     frames = read(fname,':')
     outfile = args.outfile
+    censort = args.centersorting
 
     sparse_options = [sparsefile]
     if sparsefile != '':
@@ -261,7 +263,7 @@ def set_variable_values_PS(args):
             sys.exit(0)
         xyz_slice = [args.slice[0],args.slice[1]]
 
-    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag,args.nonorm]
+    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag,args.nonorm,censort]
 
 #########################################################################
 

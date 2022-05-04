@@ -161,9 +161,9 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
 
             else:
 
-                print("")
-                print("Computing potential projection for frame", i+1)
-                print("---------------------------------------------")
+         #       print("")
+         #       print("Computing potential projection for frame", i+1)
+         #       print("---------------------------------------------")
 
                 if np.sum(cell[i])==0:
 
@@ -307,9 +307,9 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
 
             else:
                 
-                print("")
-                print("Computing potential projection for frame", i+1)
-                print("---------------------------------------------")
+        #        print("")
+        #        print("Computing potential projection for frame", i+1)
+        #        print("---------------------------------------------")
 
                 if np.sum(cell[i])==0:
 
