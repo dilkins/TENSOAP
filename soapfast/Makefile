@@ -2,7 +2,7 @@
 
 F2PY=f2py3
 PIP=pip3
-PYTH=python
+PYTH=python3
 CC=gcc
 
 # Install the python packages needed to run SOAPFAST
