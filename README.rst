@@ -125,7 +125,7 @@ This creates :code:`PS1.npy`, which contains the full power spectrum. The next s
 ::
 
   $ sagpr_get_PS -lm 0 -f coords_1000.xyz -o PS0
-  $ sagpr_get_kernel -z 2 -ps PS1.npy -ps0 PS0.npy -s PS1_natoms.npy -o kernel1
+  $ sagpr_get_kernel -z 2 -ps PS1.npy -ps0 PS0.npy -s PS0_natoms.npy -o kernel1
 
 We now use the kernel built to perform regression. Rather than do the regression and prediction in one go, we instead demonstrate the generation of an SA-GPR model using :code:`sagpr_train` and the prediction of the dipole moments using :code:`sagpr_prediction`. Firstly we train an SA-GPR model:
 
