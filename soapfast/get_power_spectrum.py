@@ -28,6 +28,10 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
     
     # Get coordinates and names
     npoints   = len(frames)
+    # If we have called this function without any frames, return softly
+    if (npoints==0):
+        print("No frames passed to get_power_spectrum")
+        return 0
     all_names = np.array([frames[i].get_chemical_symbols() for i in range(npoints)])
     natmax    = len(max(all_names, key=len))
     coords    = [frames[i].get_positions() for i in range(npoints)]
