@@ -10,6 +10,20 @@ ext_modules = [
         libraries=["m"],
         extra_compile_args=['-fopenmp'],
         extra_link_args=['-fopenmp'],
+    ),
+        Extension(
+        "realspace_potential",
+        ["realspace_potential.pyx"],
+        libraries=["m"],
+        extra_compile_args=['-fopenmp'],
+        extra_link_args=['-fopenmp'],
+    ),
+        Extension(
+        "fourier_integrals_MT2D",
+        ["fourier_integrals_MT2D.pyx"],
+        libraries=["m"],
+        extra_compile_args=['-fopenmp'],
+        extra_link_args=['-fopenmp'],
     )
 ]
 

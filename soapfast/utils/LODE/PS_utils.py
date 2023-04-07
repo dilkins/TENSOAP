@@ -5,7 +5,7 @@ import numpy as np
 from sympy.physics.wigner import wigner_3j
 from scipy import special
 from .. import initsoap
-from . import gvectors,fourier_integrals,direct_potential,direct_ewald,fourier_ewald,fourier_ewald_fixed
+from . import gvectors,fourier_integrals,direct_potential,direct_ewald,fourier_ewald,fourier_ewald_fixed,radial_efield,fourier_integrals_MT2D,realspace_potential
 
 #############################################################################################
 
@@ -33,7 +33,7 @@ def setup_orthomatrix(nmax,rc):
 
 ##################################################################################################################
 
-def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,atom_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize,average):
+def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,atom_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize,average,efield,MT2D):
 
     # compute the second kind orthogonal projections from the SOAP density or potential 
     if electro == True:
@@ -43,15 +43,15 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
             if fixcell == True:
 
                  # wave-vectors for reciprocal space calculation
-                 Gcut = 2.0*np.pi/(2*sigewald) # angs^-1
+                 Gcut = 2.0*np.pi/(2.0*sigewald) # angs^-1
                  nside = np.array([256,256,256],int) # default for visualization grid
                  invcell = np.linalg.inv(cell[0].T)*2*np.pi
                  G,Gx,iGx,iGmx,nG,irad = gvectors.ggen(invcell[0],invcell[1],invcell[2],nside,Gcut)
                  print("Number of k-vectors:", nG)
                  print("---------------------------------------")
-                 if nside[0]/2 <= irad[0] or nside[1]/2 <= irad[1] or nside[2]/2 <= irad[2]:
-                     print("ERROR: G-ellipsoid covers more points than half of the box side: decrease Gcut or use more grid points for 3D visualization")
-                     sys.exit(0)
+                 #if nside[0]/2 <= irad[0] or nside[1]/2 <= irad[1] or nside[2]/2 <= irad[2]:
+                 #    print("ERROR: G-ellipsoid covers more points than half of the box side: decrease Gcut or use more grid points for 3D visualization")
+                 #    sys.exit(0)
                  # G moduli of the semi-sphere x>0
                  Gval = np.zeros(nG,float)
                  Gval = G[:nG]
@@ -67,7 +67,63 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
 
                  # precompute fourier integrals for the fixed cell provided
                  alphaewald = 1.0/(2.0*sigewald**2)
-                 [orthoradint2,harmonics2] = fourier_integrals.fourier_integrals(nG,nmax,lmax,alphaewald,rc,sigma,Gval,Gvec,orthomatrix)
+                 if MT2D:
+
+                     [orthoradint2,harmonics2] = fourier_integrals_MT2D.fourier_integrals_MT2D(nG,nmax,lmax,alphaewald,rc,sigma,Gval,Gvec,orthomatrix)
+
+#                     # define 3D grid
+#                     nside = {}
+#                     spacing = 0.5
+#                     for nn in range(1,1000):
+#                         dx1 = cell[0][0,0]/nn
+#                         dx2 = cell[0][0,0]/(nn+1)
+#                         if dx2 <= spacing <= dx1:
+#                             nside[0] = nn
+#                         dy1 = cell[0][1,1]/nn
+#                         dy2 = cell[0][1,1]/(nn+1)
+#                         if dy2 <= spacing <= dy1:
+#                             nside[1] = nn
+#                         dz1 = cell[0][2,2]/nn
+#                         dz2 = cell[0][2,2]/(nn+1)
+#                         if dz2 <= spacing <= dz1:
+#                             nside[2] = nn
+#                 
+#                     npoints = 1
+#                     for i in range(3):
+#                         npoints *= nside[i]
+#                     dx = cell[0][0,0] / nside[0] 
+#                     dy = cell[0][1,1] / nside[1] 
+#                     dz = cell[0][2,2] / nside[2] 
+#              
+#                     potential = realspace_potential.realspace_potential(nG,int(nat[0]),nside,dx,dy,dz,alphaewald,Gval,Gvec,coords[0])
+#                     potential *= 4*np.pi/np.linalg.det(cell[0])
+#   
+#                     print(max(potential))
+#                     
+#                     potref = np.sqrt(2.0/np.pi)/sigewald
+#                     print(potref) 
+#                     
+#                     potential -= max(potential)-potref
+#                     print(max(potential))
+#                     sys.exit(0)
+# 
+#                     cubef = open("potential_screened_1.cube","w")
+#                     print("Reconstructed electron density",file=cubef)
+#                     print("CUBE FORMAT",file=cubef)
+#                     print(nat[0], 0.0, 0.0, 0.0,file=cubef)
+#                     metric = np.array([[dx,0.0,0.0],[0.0,dy,0.0],[0.0,0.0,dz]])
+#                     for ix in range(3):
+#                         print(nside[ix], metric[ix,0], metric[ix,1], metric[ix,2],file=cubef)
+#                     for iat in range(nat[0]):
+#                         print(79, float(79), coords[0][iat,0], coords[0][iat,1], coords[0][iat,2],file=cubef)
+#                     for igrid in range(npoints):
+#                         print(potential[igrid],file=cubef)
+#                     cubef.close()
+#                 
+#                     print("all good so far!")
+#                     sys.exit(0)
+                 else:
+                     [orthoradint2,harmonics2] = fourier_integrals.fourier_integrals(nG,nmax,lmax,alphaewald,rc,sigma,Gval,Gvec,orthomatrix)
                  orthoradint2 = np.moveaxis(orthoradint2, 0, -1)
 
     # Get number of features
@@ -179,9 +235,9 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                         invcell = np.linalg.inv(cell[i].T)*2*np.pi
                         G,Gx,iGx,iGmx,nG,irad = gvectors.ggen(invcell[0],invcell[1],invcell[2],nside,Gcut)
                         print("Number of k-vectors:", nG)
-                        if nside[0]/2 <= irad[0] or nside[1]/2 <= irad[1] or nside[2]/2 <= irad[2]:
-                            print("ERROR: G-ellipsoid covers more points than half of the box side: decrease Gcut or use more grid points for 3D visualization")
-                            sys.exit(0)
+                        #if nside[0]/2 <= irad[0] or nside[1]/2 <= irad[1] or nside[2]/2 <= irad[2]:
+                        #    print("ERROR: G-ellipsoid covers more points than half of the box side: decrease Gcut or use more grid points for 3D visualization")
+                        #    sys.exit(0)
                         # G moduli of the semi-sphere x>0
                         Gval = np.zeros(nG,float)
                         Gval = G[:nG]
@@ -197,19 +253,33 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
 
 
                         # fourier contribution of Ewald potential projections
-                        omega2_fourier = fourier_ewald.fourier_ewald(sigewald,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG)
+                        omega2_fourier = fourier_ewald.fourier_ewald(sigewald,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG,MT2D)
                         # direct contribution of Ewald potential projections
                         omega2_direct = direct_ewald.direct_ewald(sigewald,cell[i].T,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,radsize,lebsize)
 
                     else:
 
                          # fourier contribution of Ewald potential projections
-                         omega2_fourier = fourier_ewald_fixed.fourier_ewald_fixed(nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG,orthoradint2,harmonics2)
+                         omega2_fourier = fourier_ewald_fixed.fourier_ewald_fixed(nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sigewald,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG,orthoradint2,harmonics2,MT2D)
                          # direct contribution of Ewald potential projections
                          omega2_direct = direct_ewald.direct_ewald(sigewald,cell[i].T,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,radsize,lebsize)
 
                     # total potential projections 
                     omega2 = omega2_direct + omega2_fourier
+                    
+                    if efield == True:
+                         
+                        orthoradint_efield = radial_efield.radial_efield(nmax,orthomatrix,sigma)
+                        omega_efield = np.zeros_like(omega2)
+                        for iat in range(nat[i]):
+                            for ispe in range(nspecies):
+                                for n in range(nmax):
+                                    for l in range(lmax+1):
+                                        for im in range(2*l+1):
+                                            if l==1 and im==1:
+                                                omega_efield[iat,ispe,n,l,im] = complex(np.sqrt(4.0*np.pi/3.0)*orthoradint_efield[n],0.0)
+                        #omega2 += omega_efield
+                        omega2 = omega_efield.copy()
 
 
             if verbose:
@@ -325,9 +395,9 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
                         invcell = np.linalg.inv(cell[i].T)*2*np.pi
                         G,Gx,iGx,iGmx,nG,irad = gvectors.ggen(invcell[0],invcell[1],invcell[2],nside,Gcut)
                         print("Number of k-vectors:", nG)
-                        if nside[0]/2 <= irad[0] or nside[1]/2 <= irad[1] or nside[2]/2 <= irad[2]:
-                            print("ERROR: G-ellipsoid covers more points than half of the box side: decrease Gcut or use more grid points for 3D visualization")
-                            sys.exit(0)
+                        #if nside[0]/2 <= irad[0] or nside[1]/2 <= irad[1] or nside[2]/2 <= irad[2]:
+                        #    print("ERROR: G-ellipsoid covers more points than half of the box side: decrease Gcut or use more grid points for 3D visualization")
+                        #    sys.exit(0)
                         # G moduli of the semi-sphere x>0
                         Gval = np.zeros(nG,float)
                         Gval = G[:nG]
@@ -343,19 +413,34 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
 
 
                         # fourier contribution of Ewald potential projections
-                        omega2_fourier = fourier_ewald.fourier_ewald(sigewald,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG)
+                        omega2_fourier = fourier_ewald.fourier_ewald(sigewald,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG,MT2D)
                         # direct contribution of Ewald potential projections
                         omega2_direct = direct_ewald.direct_ewald(sigewald,cell[i].T,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,radsize,lebsize)
 
                     else:
 
                          # fourier contribution of Ewald potential projections
-                         omega2_fourier = fourier_ewald_fixed.fourier_ewald_fixed(nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG,orthoradint2,harmonics2)
+                         omega2_fourier = fourier_ewald_fixed.fourier_ewald_fixed(nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],cell[i].T,rc,coords[i],all_radial,sigma,sigewald,nmax,orthomatrix,nside,iGvec,imGvec,Gval,Gvec,nG,orthoradint2,harmonics2,MT2D)
                          # direct contribution of Ewald potential projections
                          omega2_direct = direct_ewald.direct_ewald(sigewald,cell[i].T,nat[i],nnmax,nspecies,lmax,centers,all_species,nneighmax[i],atom_indexes[i],rc,coords[i],all_radial,sigma,sg,nmax,orthomatrix,radsize,lebsize)
 
                     # total potential projections 
                     omega2 = omega2_direct + omega2_fourier
+                    
+                    if efield == True:
+                         
+                        orthoradint_efield = radial_efield.radial_efield(nmax,orthomatrix,sigma)
+                        omega_efield = np.zeros_like(omega2)
+                        for iat in range(nat[i]):
+                            for ispe in range(nspecies):
+                                for n in range(nmax):
+                                    for l in range(lmax+1):
+                                        for im in range(2*l+1):
+                                            if l==1 and im==1:
+                                                omega_efield[iat,ispe,n,l,im] = complex(np.sqrt(4.0*np.pi/3.0)*orthoradint_efield[n],0.0)
+                        #omega2 += omega_efield
+                        omega2 = omega_efield.copy()
+
 
             if verbose:
                 strg = "Doing point %*i of %*i (%6.2f %%)"%(npad,i+1,npad,npoints,100 * float(i+1)/npoints)
@@ -366,17 +451,30 @@ def compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,
 
                 # Fill power spectrum arrays
                 omegaconj = np.zeros((nat[i],nspecies,2*lam+1,nmax,lmax+1,lmax+1,2*lmax+1),complex)
-                harmconj = np.zeros((nat[i],nspecies,lmax+1,lmax+1,2*lmax+1,2*lam+1,nnmax),dtype=complex)
-    
-                for lval in range(lmax+1):
-                    for im in range(2*lval+1):
-                        for lval2 in range(lmax+1):
-                            for mu in range(2*lam+1):
-                                if abs(im-lval-mu+lam) <= lval2:
-                                    harmconj[:,:,lval2,lval,im,mu,:] = np.conj(harmonic1[:,:,lval2,lval2+im-lval-mu+lam,:])
+#                harmconj = np.zeros((nat[i],nspecies,lmax+1,lmax+1,2*lmax+1,2*lam+1,nnmax),dtype=complex)
+#    
+#                for lval in range(lmax+1):
+#                    for im in range(2*lval+1):
+#                        for lval2 in range(lmax+1):
+#                            for mu in range(2*lam+1):
+#                                if abs(im-lval-mu+lam) <= lval2:
+#                                    harmconj[:,:,lval2,lval,im,mu,:] = np.conj(harmonic1[:,:,lval2,lval2+im-lval-mu+lam,:])
                 for iat in range(ncen[i]):
+
+                    #TODO ADDED TO SAVE MEMORY!
+                    harmconj = np.zeros((nspecies,lmax+1,lmax+1,2*lmax+1,2*lam+1,nnmax),dtype=complex)
+                    for lval in range(lmax+1):
+                        for im in range(2*lval+1):
+                            for lval2 in range(lmax+1):
+                                for mu in range(2*lam+1):
+                                    if abs(im-lval-mu+lam) <= lval2:
+                                        harmconj[:,lval2,lval,im,mu,:] = np.conj(harmonic1[iat,:,lval2,lval2+im-lval-mu+lam,:])
+
+
                     for ispe in range(nspecies): 
-                        omegaconj[iat,ispe] = np.einsum('lnh,lkmvh->vnklm',orthoradint1[iat,ispe],harmconj[iat,ispe])
+                        #omegaconj[iat,ispe] = np.einsum('lnh,lkmvh->vnklm',orthoradint1[iat,ispe],harmconj[iat,ispe])
+                        #TODO ADDED TO SAVE MEMORY!
+                        omegaconj[iat,ispe] = np.einsum('lnh,lkmvh->vnklm',orthoradint1[iat,ispe],harmconj[ispe])
         
                 if single_radial==False:
 

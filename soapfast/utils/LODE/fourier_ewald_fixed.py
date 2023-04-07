@@ -4,15 +4,15 @@ import scipy.special as sc
 import math
 import time
 import ctypes
-from . import phasecomb,gcontra,gausslegendre,nearfield
+from . import phasecomb,gcontra,gausslegendre,nearfield,realspace_potential,potrefewald,potrefewaldmt2d
 
-def fourier_ewald_fixed(nat,nnmax,nspecies,lmax,centers,all_species,nneighmax,atom_indexes,cell,rcut,coords,all_radial,sigma,sg,nmax,orthomatrix,nside,iGx,imGx,Gval,Gvec,nG,orthoradint,harmonics):
+def fourier_ewald_fixed(nat,nnmax,nspecies,lmax,centers,all_species,nneighmax,atom_indexes,cell,rcut,coords,all_radial,sigma,sigmaewald,nmax,orthomatrix,nside,iGx,imGx,Gval,Gvec,nG,orthoradint,harmonics,MT2D):
     """return projections of the non-local field on basis functions"""
 
     volume = np.linalg.det(cell)
 
     start = time.time()
-    alpha = 1.0/(2.0*sg**2)
+    alphaewald = 1.0/(2.0*sigmaewald**2)
 
     start1 = time.time()
     # process coordinates 
@@ -52,8 +52,25 @@ def fourier_ewald_fixed(nat,nnmax,nspecies,lmax,centers,all_species,nneighmax,at
     start4 = time.time()
     # perform contraction over G-vectors
     omega = gcontra.gcontra(nat,nspecies,nmax,lmax,nG,orthoradint,harmonics.T,2.0*phase)
-    omega *= 16.0*np.pi**2/volume 
-#    print "G-contraction :", time.time()-start4, "seconds"
+    omega *= 16.0*np.pi**2/volume
+
+#    #TODO uncomment to center potential
+#    if MT2D: 
+#        potatom = potrefewaldmt2d.potrefewaldmt2d(nG,Gval,Gvec.T,alphaewald)
+#    else:
+#        potatom = potrefewald.potrefewald(nG,Gval,Gvec.T,alphaewald)
+#    potatom *= 4*np.pi/volume
+#    potref = np.sqrt(2.0/np.pi)/sigmaewald
+#    potdiff = nat * (potatom-potref)
+#
+#    intradialbasis = np.zeros(nmax,float)
+#    for n in range(nmax):
+#        # normalization factor for primitive radial functions
+#        normfact = np.sqrt(2.0/(sc.gamma(1.5+n)*sigma[n]**(3.0+2.0*n)))
+#        intradialbasis[n] = normfact * 2.0**((1+n)/2.0) * sigma[n]**(3+n) * sc.gamma(0.5*(3.0+n))
+#    omegaref = np.sqrt(4.0*np.pi) * np.dot(orthomatrix,intradialbasis) * potdiff
+#    for n in range(nmax):
+#        omega[:,:,n,0,0] -= omegaref[n]
 
 
 #    start_near = time.time()

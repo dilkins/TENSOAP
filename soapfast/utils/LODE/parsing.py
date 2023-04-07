@@ -24,6 +24,8 @@ def add_command_line_arguments_PS(parsetext):
     parser.add_argument("-cw", "--cweight",       type=float, default=1.0,                              help="Central atom weight")
     parser.add_argument("-lm", "--lambdaval",     type=int,   default=0,                                help="Spherical tensor order")
     parser.add_argument("-p",  "--periodic",                  action='store_true',                      help="Is the system periodic?")
+    parser.add_argument("-efield", "--efield",                    action='store_true',                      help="E-field descriptor?")
+    parser.add_argument("-mt2d", "--mt2d",                    action='store_true',                      help="Martyna-Tckerman correction in 2D")
     parser.add_argument("-nc", "--ncut",          type=int,   default=-1,                               help="Dimensionality cutoff")
     parser.add_argument("-i",  "--initial",       type=int,   default=-1,                               help="Initial column for spherical component sparsification")
     parser.add_argument("-sf", "--sparsefile",    type=str,   default='',                               help="File with sparsification parameters")
@@ -71,6 +73,8 @@ def set_variable_values_PS(args):
     cw = args.cweight             # central atom weight
     lam = args.lambdaval          # spherical tensor order
     periodic = args.periodic      # True for periodic systems
+    efield = args.efield          # True for electric field 
+    mt2d = args.mt2d              # True for Martyna-Tuckerman correction in 2D 
     ncut = args.ncut              # dimensionality cutoff
     sparsefile = args.sparsefile
     fname = args.fname
@@ -132,6 +136,6 @@ def set_variable_values_PS(args):
             sys.exit(0)
         xyz_slice = [args.slice[0],args.slice[1]]
 
-    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag,args.nonorm,ele,sew,srad,rad,leb,ave]
+    return [nmax,lmax,rc,sg,cen,spec,cw,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,args.initial,atomic,all_radial,not args.uselist,xyz_slice,args.imag,args.nonorm,ele,sew,srad,rad,leb,ave,efield,mt2d]
 
 #########################################################################

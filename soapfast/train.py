@@ -113,6 +113,8 @@ def main():
                     sys.exit(0)
                 # Now split the kernels
                 test_set = np.setdiff1d(list(range(nN)),training_set)
+                ntrain = int(fractrain*len(training_set))
+                training_set = training_set[:ntrain]
                 ktr = []
                 kte = []
                 for k in range(int(len(sparsify)/2)):
@@ -211,7 +213,7 @@ def main():
                             corrfile.close()
                         else:
                             corrfile = open("prediction_L" + str_rank + ".txt","w")
-                            for j in range(len(pred)):
+                            for j in range(len(pred[i])):
                                 print(pte[i][j],"  ",pred[i][j], file=corrfile)
                             corrfile.close()
                         # Accumulate errors

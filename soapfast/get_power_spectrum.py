@@ -13,7 +13,7 @@ import random
 
 ###############################################################################################################################
 
-def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,periodic=False,outfile='',subset=['NO',None],initial=-1,sparsefile='',sparse_options=[''],cen=[],spec=[],atomic=[False,None],all_radial=[1.0,0.0,0.0],useall=False,xyz_slice=[],verbose=True,get_imag=False,norm=True,electro=False,sigewald=1.0,single_radial=False,radsize=50,lebsize=146,average=False):
+def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,periodic=False,outfile='',subset=['NO',None],initial=-1,sparsefile='',sparse_options=[''],cen=[],spec=[],atomic=[False,None],all_radial=[1.0,0.0,0.0],useall=False,xyz_slice=[],verbose=True,get_imag=False,norm=True,electro=False,sigewald=1.0,single_radial=False,radsize=50,lebsize=146,average=False,efield=False,MT2D=False):
 
     # If we want a slice of the coordinates, do this BEFORE anything else.
     if (len(xyz_slice)!=0):
@@ -68,6 +68,7 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
         nnmax = int(np.floor((4.0/3. *np.pi* rc**3) * max_density * 2))
         if electro==True:
             nnmax = 100
+        nnmax = 1000
 
     if (verbose):
         print("Maximum number of neighbours = %i"%nnmax)
@@ -139,7 +140,7 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
     import os
     pname = os.path.dirname(os.path.realpath(__file__))
     if os.path.isfile(pname + "/utils/LODE/gvectors.so"):
-        [power,featsize] = psutil.compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,all_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize,average)
+        [power,featsize] = psutil.compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,all_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose,electro,fixcell,sigewald,single_radial,radsize,lebsize,average,efield,MT2D)
     else:
         [power,featsize] = psutil.compute_power_spectrum(nat,nneighmax,natmax,lam,lmax,npoints,nspecies,nnmax,nmax,llmax,lvalues,centers,all_indexes,all_species,coords,cell,rc,cw,sigma,sg,orthomatrix,sparse_options,all_radial,ncen,useall,verbose)
     if (verbose):
@@ -308,8 +309,8 @@ def main():
     pname = os.path.dirname(os.path.realpath(__file__))
     if os.path.isfile(pname + "/utils/LODE/gvectors.so"):
         args = parse.add_command_line_arguments_PS("Calculate power spectrum")
-        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm,electro,sigewald,single_radial,radsize,lebsize,average] = parse.set_variable_values_PS(args)
-        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm),electro=electro,sigewald=sigewald,single_radial=single_radial,radsize=radsize,lebsize=lebsize,average=average)
+        [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm,electro,sigewald,single_radial,radsize,lebsize,average,efield,MT2D] = parse.set_variable_values_PS(args)
+        get_power_spectrum(lam,frames,nmax=nmax,lmax=lmax,rc=rcut,sg=sig,ncut=ncut,periodic=periodic,outfile=outfile,cw=cweight,subset=subset,initial=initial,sparsefile=sparsefile,sparse_options=sparse_options,cen=cen,spec=spec,atomic=atomic,all_radial=all_radial,useall=useall,xyz_slice=xyz_slice,get_imag=get_imag,norm=(not nonorm),electro=electro,sigewald=sigewald,single_radial=single_radial,radsize=radsize,lebsize=lebsize,average=average,efield=efield,MT2D=MT2D)
     else:
         args = parse.add_command_line_arguments_PS("Calculate power spectrum")
         [nmax,lmax,rcut,sig,cen,spec,cweight,lam,periodic,ncut,sparsefile,frames,subset,sparse_options,outfile,initial,atomic,all_radial,useall,xyz_slice,get_imag,nonorm] = parse.set_variable_values_PS(args)
