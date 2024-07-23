@@ -268,8 +268,8 @@ We start with the power spectra generated in example 3, and take 500 environment
 
   $ cd example/water_bulk
   $ mv PS2_sparse.npy PS2.npy;mv PS2_sparse_natoms.npy PS2_natoms.npy
-  $ get_atomic_power_spectrum.py -lm 0 -p PS0.npy -f coords_1000.xyz -o PS0_sparse_atomic
-  $ get_atomic_power_spectrum.py -lm 2 -p PS2.npy -f coords_1000.xyz -o PS2_sparse_atomic
+  $ get_atomic_power_spectrum.py -p PS0.npy -f coords_1000.xyz -o PS0_sparse_atomic
+  $ get_atomic_power_spectrum.py -p PS2.npy -f coords_1000.xyz -o PS2_sparse_atomic
 
 Rather than having a row for each molecule, these power spectra have a row for each environment. The next step is to get a list of the 500 furthest-point environments for each power spectrum. Firstly, we have to produce a power spectrum file that has each environment as a separate entry, after which the FPS details can be found:
 
