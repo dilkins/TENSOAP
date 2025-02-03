@@ -50,7 +50,11 @@ def get_power_spectrum(lam,frames,nmax=8,lmax=6,rc=4.0,sg=0.3,ncut=-1,cw=1.0,per
     
     # List all species according to their valence
     all_species = []
-    for k in list(set(np.concatenate(all_names))):
+    unique_names_sorted_by_atomic_number = sorted(
+        list(set(np.concatenate(all_names))),
+        key=lambda x: atomic_numbers[x]
+    )
+    for k in unique_names_sorted_by_atomic_number:
         all_species.append(atomic_numbers[k])
     
     # List number of atoms for each configuration
