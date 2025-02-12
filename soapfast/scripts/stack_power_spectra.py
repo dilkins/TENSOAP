@@ -8,8 +8,14 @@ outfile = os.environ.get("outfile")
 nrun = int(os.environ.get("numrun"))
 
 # Read in power spectrum and number of atoms
-all_ps=[np.load("PS_output_" + str(i+1) + ".npy") for i in range(nrun)]
-all_natom=[np.load("PS_output_" + str(i+1) + "_natoms.npy") for i in range(nrun)]
+all_ps = []
+all_natom = []
+for i in range(nrun):
+    if (os.path.exists("PS_output_" + str(i+1) + ".npy")):
+        all_ps.append(np.load("PS_output_" + str(i+1) + ".npy"))
+        all_natom.append(np.load("PS_output_" + str(i+1) + "_natoms.npy"))
+
+nrun = len(all_ps)
 
 # Put power spectra together
 npoints = sum([np.shape(all_ps[i])[0] for i in range(nrun)])
